@@ -14,4 +14,6 @@ git config user.name "Pippo Poppi Games"; git config user.email "340152759+pippo
 git config credential.helper '!gh auth git-credential'
 touch .nojekyll && git add -A && git commit -q -m "Deploy" && git push -q -f https://github.com/pippopoppi/bounce-studio.git HEAD:gh-pages
 rm -rf .git
+# Pages builds do not start on their own for this repo: request one explicitly.
+gh api -X POST repos/pippopoppi/bounce-studio/pages/builds >/dev/null && echo "Pages build requested"
 echo "Live in ~1 min: https://pippopoppi.github.io/bounce-studio/"
