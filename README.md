@@ -44,7 +44,7 @@ Stack: TypeScript, React, Vite, HTML5 Canvas 2D, Matter.js, Web Audio API, Media
 
 Struttura (`src/`): `physics/` (mondo Matter.js, arene, ostacoli, eventi) · `audio/` (motore Web Audio, suoni generati) · `render/` (canvas, effetti) · `sim/` (orchestrazione a passo fisso) · `export/` (registrazione) · `core/` (tipi di default, preset, JSON, RNG) · `ui/` (pannelli React).
 
-Deploy: push su `main` → GitHub Actions (`.github/workflows/deploy.yml`) esegue test e build e pubblica `dist/` su GitHub Pages.
+Deploy: `tools/publish.sh "messaggio"` esegue i test, fa il commit, builda con `BASE_PATH=/bounce-studio/` e pubblica `dist/` sul branch `gh-pages`, servito da GitHub Pages. In alternativa `.github/workflows/deploy.yml` fa la stessa cosa con GitHub Actions (impostare Pages su "GitHub Actions").
 
 ## Licenza
 
