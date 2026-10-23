@@ -43,7 +43,7 @@ describe('physics world', () => {
     }
   });
   it('lets balls escape through the opening and eliminates on hits', () => {
-    const cfg = ARENA_PRESETS[2].apply(defaultConfig());
+    const cfg = ARENA_PRESETS.find((p) => p.name === 'Escape ring')!.apply(defaultConfig());
     cfg.categories.forEach((k) => { k.count = 6; k.spawn.speed = 1500; });
     const { w } = run(cfg, 40);
     expect(w.balls.size).toBeLessThan(18);
@@ -63,12 +63,53 @@ describe('physics world', () => {
     expect(cfg.categories.map((k) => k.id)).toContain(pair.a);
   });
   it('moves obstacles and rotates arenas without losing balls', () => {
-    const cfg = ARENA_PRESETS[0].apply(defaultConfig());
+    const cfg = ARENA_PRESETS.find((p) => p.name === 'Pinball circle')!.apply(defaultConfig());
     const { w, events } = run(cfg, 15);
     expect(w.balls.size).toBe(12);
     expect(events).toBeGreaterThan(100);
-    const z = ARENA_PRESETS[1].apply(defaultConfig());
+    const z = ARENA_PRESETS.find((p) => p.name === 'Zero-G chaos')!.apply(defaultConfig());
     const r = run(z, 15);
     expect(r.w.balls.size).toBe(12);
+  });
+
+  it('pipe mode: characters enter one at a time and stay inside the arena or the pipe', () => {
+    const cfg = ARENA_PRESETS.find((p) => p.name === 'Pipe drop')!.apply(defaultConfig());
+    const total = cfg.categories.reduce((n, k) => n + k.count, 0);
+    const w = new PhysicsWorld(cfg), dt = 1 / cfg.physics.timeStep;
+    expect(w.balls.size).toBe(0);
+    expect(w.alive()).toBe(total);
+    expect(Object.values(w.counts()).reduce((a, b) => a + b, 0)).toBe(total);
+    let escapes = 0;
+    const seen: number[] = [];
+    for (let i = 0; i < 30 * cfg.physics.timeStep; i++) {
+      for (const e of w.step(dt)) if (e.type === 'escape') escapes++;
+      if (i % cfg.physics.timeStep === 0) seen.push(w.balls.size);
+    }
+    expect(escapes).toBe(0);
+    expect(w.waiting()).toBe(0);
+    expect(w.balls.size).toBe(total);
+    expect(seen[1]).toBeGreaterThan(0);
+    expect(seen[1]).toBeLessThan(total); // staggered, not all at once
+    const g = w.pipe()!;
+    for (const b of w.balls.values()) {
+      const lx = b.body.position.x - CENTER.x, ly = b.body.position.y - CENTER.y;
+      const inRing = Math.hypot(lx, ly) < cfg.arena.radius - b.radius + 8;
+      const v = lx * g.d.x + ly * g.d.y, u = lx * g.u.x + ly * g.u.y;
+      const inPipe = v > g.vMin - b.radius && v < g.vEnd && Math.abs(u) < g.halfWidth;
+      expect(inRing || inPipe).toBe(true);
+    }
+  });
+  it('pipe mode is deterministic and works on a rectangle too', () => {
+    const cfg = ARENA_PRESETS.find((p) => p.name === 'Pipe drop')!.apply(defaultConfig());
+    cfg.arena.type = 'rect';
+    const a = run(cfg, 12).w, b = run(cfg, 12).w;
+    expect(a.balls.size).toBe(15);
+    expect(snapshot(a)).toEqual(snapshot(b));
+    for (const ball of a.balls.values()) {
+      const p = ball.body.position;
+      expect(Math.abs(p.x - CENTER.x)).toBeLessThan(cfg.arena.width / 2);
+      expect(p.y - CENTER.y).toBeLessThan(cfg.arena.height / 2);
+      expect(p.y).toBeGreaterThan(-400);
+    }
   });
 });

@@ -99,7 +99,29 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
           <Num label="Wall bounciness" value={a.restitution} onChange={(v) => set(['arena', 'restitution'], Math.max(0, v))} min={0} max={1.5} step={0.05} />
           <Num label="Wall friction" value={a.friction} onChange={(v) => set(['arena', 'friction'], Math.max(0, v))} min={0} max={1} step={0.01} />
         </Row>
-        <Color label="Wall colour" value={a.color} onChange={(v) => set(['arena', 'color'], v)} />
+        <Row>
+          <Color label="Wall colour" value={a.color} onChange={(v) => set(['arena', 'color'], v)} />
+          <Sel label="Wall style" value={r.wallStyle} onChange={(v) => set(['render', 'wallStyle'], v)} options={[{ value: 'solid', label: 'Solid colour' }, { value: 'rainbow', label: 'Rainbow ring' }]} />
+        </Row>
+        <Check label="Pipe: characters enter through a chute" checked={a.pipe.enabled} onChange={(v) => set(['arena', 'pipe', 'enabled'], v)} />
+        {a.pipe.enabled ? <>
+          <Row>
+            <Num label="Pipe width" unit="px" value={a.pipe.width} onChange={(v) => set(['arena', 'pipe', 'width'], Math.max(20, v))} min={20} max={600} step={10} />
+            <Num label="Pipe length" unit="px" value={a.pipe.length} onChange={(v) => set(['arena', 'pipe', 'length'], Math.max(40, v))} min={40} max={1500} step={10} />
+          </Row>
+          <Row>
+            <Num label="Direction" unit="°" value={a.pipe.angle} onChange={(v) => set(['arena', 'pipe', 'angle'], v)} step={15} />
+            <Check label="Closed at the far end" checked={a.pipe.closed} onChange={(v) => set(['arena', 'pipe', 'closed'], v)} />
+          </Row>
+          <Row>
+            <Num label="One every" unit="s" value={a.pipe.interval} onChange={(v) => set(['arena', 'pipe', 'interval'], Math.max(0.02, v))} min={0.02} step={0.1} />
+            <Num label="First after" unit="s" value={a.pipe.startDelay} onChange={(v) => set(['arena', 'pipe', 'startDelay'], Math.max(0, v))} min={0} step={0.5} />
+          </Row>
+          <Sel label="Entry order" value={a.pipe.order} onChange={(v) => set(['arena', 'pipe', 'order'], v)} options={[
+            { value: 'interleave', label: 'Alternate the types' }, { value: 'sequence', label: 'One type after the other' }, { value: 'shuffle', label: 'Shuffled (seeded)' }
+          ]} />
+          <p className="hint">Set a character type's start position to “From the pipe” to queue it. −90° = top. The ring does not rotate while a pipe is attached.</p>
+        </> : null}
       </Section>
 
       <Section title="Obstacles" badge={cfg.obstacles.length ? String(cfg.obstacles.length) : undefined}>
@@ -132,7 +154,10 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
         {r.squash.enabled ? <Num label="Squash amount" value={r.squash.amount} onChange={(v) => set(['render', 'squash', 'amount'], Math.min(0.6, Math.max(0, v)))} min={0} max={0.6} step={0.02} /> : null}
         <Check label="Character labels" checked={r.labels} onChange={(v) => set(['render', 'labels'], v)} />
         <Check label="Live counter" checked={r.counter} onChange={(v) => set(['render', 'counter'], v)} />
-        <Text label="Title text" value={r.title} placeholder="shown at the top" onChange={(v) => set(['render', 'title'], v)} />
+        <Row>
+          <Text label="Title text" value={r.title} placeholder="shown with the counter" onChange={(v) => set(['render', 'title'], v)} />
+          <Sel label="Counter & title" value={r.hudPosition} onChange={(v) => set(['render', 'hudPosition'], v)} options={[{ value: 'top', label: 'At the top' }, { value: 'bottom', label: 'At the bottom' }]} />
+        </Row>
       </Section>
     </div>
   );

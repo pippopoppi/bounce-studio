@@ -6,8 +6,9 @@ export interface Asset { id: string; kind: AssetKind; name: string; dataUrl: str
 export interface Vec { x: number; y: number }
 
 export interface SpawnConfig {
-  mode: 'random' | 'ring' | 'manual';
+  mode: 'random' | 'ring' | 'manual' | 'pipe';
   positions: Vec[];            // manual mode: offsets from the arena centre, canvas pixels
+                               // pipe mode: the characters queue up and drop in one at a time through the arena pipe
   velocityMode: 'random' | 'fixed' | 'zero';
   speed: number;               // px/s
   angle: number;               // degrees (fixed mode)
@@ -35,6 +36,17 @@ export interface Category {
 }
 
 export type ArenaType = 'circle' | 'rect' | 'polygon' | 'circleGap';
+// A chute attached to the wall: characters in 'pipe' spawn mode enter the arena through it, one after the other.
+export interface PipeConfig {
+  enabled: boolean;
+  width: number;               // inner width, px
+  length: number;              // px from the wall outwards
+  angle: number;               // degrees, direction from the centre (-90 = top)
+  closed: boolean;             // cap at the far end so nothing bounces out
+  interval: number;            // seconds between two entries
+  startDelay: number;          // seconds before the first entry
+  order: 'interleave' | 'sequence' | 'shuffle';
+}
 export interface ArenaConfig {
   type: ArenaType;
   radius: number;
@@ -48,6 +60,7 @@ export interface ArenaConfig {
   friction: number;
   wallThickness: number;
   color: string;
+  pipe: PipeConfig;
 }
 
 export type ObstacleKind = 'circle' | 'rect' | 'segment';
@@ -103,6 +116,7 @@ export interface AudioConfig {
 export interface RenderConfig {
   background: string;
   arenaFill: string;
+  wallStyle: 'solid' | 'rainbow';
   outlineWidth: number;
   outlineColor: string;        // '' = use the category colour
   trails: { enabled: boolean; length: number; width: number };
@@ -111,6 +125,7 @@ export interface RenderConfig {
   labels: boolean;
   counter: boolean;
   title: string;
+  hudPosition: 'top' | 'bottom'; // counter and title at the top or below the arena (e.g. when a pipe is at the top)
 }
 
 export interface ExportConfig { format: 'auto' | 'webm' | 'mp4'; fps: number; bitrateMbps: number }

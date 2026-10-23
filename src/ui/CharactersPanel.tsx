@@ -103,13 +103,19 @@ function CategoryEditor({ k, i, set, images, cfg, onUpload, remove }: { k: Categ
           <Num label="Air resistance" value={k.frictionAir} onChange={(v) => set([...b, 'frictionAir'], Math.max(0, v))} min={0} max={0.5} step={0.001} />
         </Row>
         <Sel label="Start position" value={s.mode} onChange={(v) => set([...b, 'spawn', 'mode'], v)} options={[
-          { value: 'random', label: 'Random inside the arena' }, { value: 'ring', label: 'Evenly on a ring' }, { value: 'manual', label: 'Manual list' }
+          { value: 'random', label: 'Random inside the arena' }, { value: 'ring', label: 'Evenly on a ring' }, { value: 'manual', label: 'Manual list' }, { value: 'pipe', label: 'From the pipe, one at a time' }
         ]} />
         {s.mode === 'manual' ? <ManualPositions k={k} b={b} set={set} /> : null}
-        <Sel label="Start velocity" value={s.velocityMode} onChange={(v) => set([...b, 'spawn', 'velocityMode'], v)} options={[
+        {s.mode === 'pipe' ? <>
+          <Row>
+            <Num label="Entry speed" unit="px/s" value={s.speed} onChange={(v) => set([...b, 'spawn', 'speed'], Math.max(0, v))} min={0} step={50} />
+            <Num label="Speed variation" unit="0–1" value={s.speedJitter} onChange={(v) => set([...b, 'spawn', 'speedJitter'], Math.min(1, Math.max(0, v)))} min={0} max={1} step={0.1} />
+          </Row>
+          <p className="hint">Timing and order are set in Settings → Arena → Pipe.</p>
+        </> : <Sel label="Start velocity" value={s.velocityMode} onChange={(v) => set([...b, 'spawn', 'velocityMode'], v)} options={[
           { value: 'random', label: 'Random direction' }, { value: 'fixed', label: 'Fixed direction' }, { value: 'zero', label: 'At rest' }
-        ]} />
-        {s.velocityMode !== 'zero' ? <Row>
+        ]} />}
+        {s.mode !== 'pipe' && s.velocityMode !== 'zero' ? <Row>
           <Num label="Speed" unit="px/s" value={s.speed} onChange={(v) => set([...b, 'spawn', 'speed'], Math.max(0, v))} min={0} step={50} />
           {s.velocityMode === 'fixed' ? <Num label="Direction" unit="°" value={s.angle} onChange={(v) => set([...b, 'spawn', 'angle'], v)} step={15} />
             : <Num label="Speed variation" unit="0–1" value={s.speedJitter} onChange={(v) => set([...b, 'spawn', 'speedJitter'], Math.min(1, Math.max(0, v)))} min={0} max={1} step={0.1} />}

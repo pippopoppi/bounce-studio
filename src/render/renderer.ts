@@ -106,8 +106,25 @@ export class Renderer {
       c.closePath();
     } else c.arc(CENTER.x, CENTER.y, a.radius, 0, Math.PI * 2);
     c.fill();
-    c.fillStyle = a.color;
+    const g = world.pipe();
+    if (g) { // the channel is part of the playfield
+      c.save(); c.translate(CENTER.x, CENTER.y); c.rotate(Math.atan2(g.d.y, g.d.x));
+      c.fillRect(g.vMin - 2, -g.halfWidth, g.vEnd - g.vMin + 2, g.halfWidth * 2);
+      c.restore();
+      c.fillStyle = a.color;
+      for (const part of world.pipeParts()) this.fillBody(part);
+    }
+    c.fillStyle = this.wallStyle(cfg, world);
     for (const part of world.wallParts()) this.fillBody(part);
+  }
+
+  private wallStyle(cfg: Config, world: PhysicsWorld): string | CanvasGradient {
+    const c = this.ctx, a = cfg.arena;
+    if (cfg.render.wallStyle !== 'rainbow' || typeof c.createConicGradient !== 'function') return a.color;
+    const rot = (world.time * a.rotationSpeed * Math.PI) / 180 + world.time * 0.6;
+    const g = c.createConicGradient(rot, CENTER.x, CENTER.y);
+    for (let i = 0; i <= 12; i++) g.addColorStop(i / 12, `hsl(${(i * 30) % 360} 100% 60%)`);
+    return g;
   }
 
   private fillBody(b: Matter.Body): void {
@@ -195,16 +212,18 @@ export class Renderer {
   private drawHud(world: PhysicsWorld, cfg: Config, time: number, status: string, winner: string | null): void {
     const c = this.ctx, r = cfg.render;
     c.textBaseline = 'middle';
+    const bottom = r.hudPosition === 'bottom';
     if (r.title) {
+      const y = bottom ? CANVAS_H - (r.counter ? 290 : 160) : 110;
       c.font = 'bold 64px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
-      c.strokeText(r.title, CANVAS_W / 2, 110); c.fillText(r.title, CANVAS_W / 2, 110);
+      c.strokeText(r.title, CANVAS_W / 2, y); c.fillText(r.title, CANVAS_W / 2, y);
     }
     if (r.counter) {
       const counts = world.counts();
       const cats = cfg.categories;
       const w = 1080 / Math.max(1, cats.length);
-      const y = r.title ? 200 : 120;
+      const y = bottom ? CANVAS_H - 160 : r.title ? 200 : 120;
       cats.forEach((k, i) => {
         const x = w * i + w / 2;
         c.fillStyle = k.color; c.beginPath(); c.arc(x - 60, y, 26, 0, Math.PI * 2); c.fill();

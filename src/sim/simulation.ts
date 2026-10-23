@@ -33,7 +33,7 @@ export class Simulation {
     this.draw();
   }
 
-  get status(): SimStatus { return { state: this.state, time: this.world.time, counts: this.world.counts(), winner: this.winner, alive: this.world.balls.size }; }
+  get status(): SimStatus { return { state: this.state, time: this.world.time, counts: this.world.counts(), winner: this.winner, alive: this.world.alive() }; }
   get config(): Config { return this.cfg; }
 
   // Rebuild the world from a configuration (physics/arena/characters changed).
@@ -145,7 +145,7 @@ export class Simulation {
   private checkEnd(): boolean {
     const counts = this.world.counts();
     const aliveCats = Object.keys(counts).filter((k) => counts[k] > 0);
-    const alive = this.world.balls.size;
+    const alive = this.world.alive();
     let done = this.world.time >= this.cfg.duration - 1e-9;
     if (this.cfg.autoStop === 'lastCharacter' && alive <= 1) done = true;
     if (this.cfg.autoStop === 'lastCategory' && aliveCats.length <= 1) done = true;

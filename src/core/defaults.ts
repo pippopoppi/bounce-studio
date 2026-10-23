@@ -1,4 +1,4 @@
-import type { ArenaConfig, Category, Config, Obstacle, SoundSlot, SpawnConfig } from '../types';
+import type { ArenaConfig, Category, Config, Obstacle, PipeConfig, SoundSlot, SpawnConfig } from '../types';
 import { pairKey } from '../types';
 
 export const BUILTIN_SOUNDS = [
@@ -40,10 +40,14 @@ export function newObstacle(kind: Obstacle['kind'], id: string): Obstacle {
   };
 }
 
+export function defaultPipe(): PipeConfig {
+  return { enabled: false, width: 170, length: 520, angle: -90, closed: true, interval: 0.6, startDelay: 0.5, order: 'interleave' };
+}
+
 export function defaultArena(): ArenaConfig {
   return {
     type: 'circle', radius: 480, width: 900, height: 1500, sides: 6, gapAngle: 90, gapWidth: 40,
-    rotationSpeed: 0, restitution: 0.98, friction: 0.01, wallThickness: 40, color: '#ffffff'
+    rotationSpeed: 0, restitution: 0.98, friction: 0.01, wallThickness: 40, color: '#ffffff', pipe: defaultPipe()
   };
 }
 
@@ -91,11 +95,11 @@ export function defaultConfig(): Config {
       victory: soundSlot('builtin:fanfare', 0.9)
     },
     render: {
-      background: '#101418', arenaFill: '#1a2129', outlineWidth: 6, outlineColor: '',
+      background: '#101418', arenaFill: '#1a2129', wallStyle: 'solid', outlineWidth: 6, outlineColor: '',
       trails: { enabled: true, length: 14, width: 0.5 },
       particles: { enabled: true, amount: 6 },
       squash: { enabled: true, amount: 0.18 },
-      labels: false, counter: true, title: ''
+      labels: false, counter: true, title: '', hudPosition: 'top'
     },
     export: { format: 'auto', fps: 60, bitrateMbps: 12 },
     assets
@@ -117,6 +121,23 @@ export const ARENA_PRESETS: ArenaPreset[] = [
         { ...newObstacle('segment', 'ob_bar2'), x: -230, y: 220, w: 300, h: 22, angularVelocity: -120 },
         { ...newObstacle('segment', 'ob_bar3'), x: 230, y: 220, w: 300, h: 22, angularVelocity: 120 },
         { ...newObstacle('circle', 'ob_bumper'), x: 0, y: 320, r: 60, restitution: 1.2, color: '#ff8a65' }
+      ]
+    })
+  },
+  {
+    name: 'Pipe drop',
+    description: 'Characters queue up and fall into a rainbow ring through a pipe, one at a time.',
+    apply: (c) => ({
+      ...c,
+      arena: { ...defaultArena(), type: 'circle', radius: 470, wallThickness: 28, pipe: { ...defaultPipe(), enabled: true } },
+      physics: { ...c.physics, gravityEnabled: true, gravityX: 0, gravityY: 1 },
+      categories: c.categories.map((k) => ({ ...k, count: Math.max(k.count, 5), spawn: { ...k.spawn, mode: 'pipe', velocityMode: 'fixed', speed: 300 } })),
+      render: { ...c.render, wallStyle: 'rainbow', background: '#000000', arenaFill: '#000000', hudPosition: 'bottom' },
+      obstacles: [
+        { ...newObstacle('circle', 'ob_top'), x: 90, y: -270, r: 58, friction: 0, restitution: 1.1, color: '#ffffff' },
+        { ...newObstacle('circle', 'ob_l'), x: -230, y: -40, r: 46, friction: 0, restitution: 1.1, color: '#ffffff' },
+        { ...newObstacle('circle', 'ob_r'), x: 200, y: 90, r: 46, friction: 0, restitution: 1.1, color: '#ffffff' },
+        { ...newObstacle('segment', 'ob_bar'), x: -40, y: 230, w: 280, h: 18, angularVelocity: 80, color: '#ffffff' }
       ]
     })
   },
