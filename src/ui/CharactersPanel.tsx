@@ -33,6 +33,22 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Prop
       ))}
       <div className="toolbar"><button className="btn btn-primary" onClick={addCategory}>+ Add character type</button></div>
 
+      <h2>Evolution</h2>
+      <Section title="Merge chain" open badge={String(cfg.categories.filter((k) => k.mergeInto).length || '')}>
+        <p className="hint">When two characters of the same type touch they can fuse into one of another type (its picture and size), with a sound. Chain the types to build an evolution: A → B → C … Only the first type needs a count; the others appear by merging. Try the <b>Evolution</b> preset in Settings → Presets.</p>
+        {cfg.categories.map((k, i) => (
+          <div className="slot" key={k.id}>
+            <Sel label={`${k.name || 'Unnamed'} + ${k.name || 'Unnamed'} become`} value={k.mergeInto ?? ''} onChange={(v) => set(['categories', i, 'mergeInto'], v || null)} options={[
+              { value: '', label: '— nothing, they just bounce —' }, ...cfg.categories.filter((o) => o.id !== k.id).map((o) => ({ value: o.id, label: o.name || 'Unnamed' }))
+            ]} />
+            {k.mergeInto && cfg.audio.merges[k.id] ? <>
+              <Num label="Min. impact to merge (0 = any touch)" unit="px/s" value={k.mergeMinImpact} onChange={(v) => set(['categories', i, 'mergeMinImpact'], Math.max(0, v))} min={0} step={50} />
+              <SlotEditor title={`Sound: ${k.name} → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? '?'}`} slot={cfg.audio.merges[k.id]} sounds={sounds} onChange={(path, v) => set(['audio', 'merges', k.id, ...path], v)} upload={(f) => upload(f, 'audio')} />
+            </> : null}
+          </div>
+        ))}
+      </Section>
+
       <h2>Music</h2>
       <Section title="Background music" open>
         <SoundPicker label="Track" value={cfg.audio.music.assetId} sounds={sounds} music onChange={(v) => set(['audio', 'music', 'assetId'], v)}
@@ -51,11 +67,6 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Prop
         <p className="hint">One sound per pair. The table grows with your character types.</p>
         <Matrix cfg={cfg} set={set} sounds={sounds} upload={(f) => upload(f, 'audio')} />
       </Section>
-      {cfg.categories.some((k) => k.mergeInto) ? <Section title="Evolutions" open>
-        {cfg.categories.filter((k) => k.mergeInto && cfg.audio.merges[k.id]).map((k) => (
-          <SlotEditor key={k.id} title={`${k.name} + ${k.name} → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? '?'}`} slot={cfg.audio.merges[k.id]} sounds={sounds} onChange={(path, v) => set(['audio', 'merges', k.id, ...path], v)} upload={(f) => upload(f, 'audio')} />
-        ))}
-      </Section> : null}
       <Section title="Events">
         {([['wall', 'Character hits a wall'], ['obstacle', 'Character hits an obstacle'], ['escape', 'Character escapes the arena'], ['eliminate', 'Character eliminated'], ['victory', 'Victory / simulation over']] as const).map(([key, label]) => (
           <SlotEditor key={key} title={label} slot={cfg.audio[key]} sounds={sounds} onChange={(path, v) => set(['audio', key, ...path], v)} upload={(f) => upload(f, 'audio')} />
@@ -77,8 +88,8 @@ function CategoryEditor({ k, i, set, images, cfg, onUpload, remove }: { k: Categ
   const img = images.find((a) => a.id === k.imageAssetId);
   const s = k.spawn;
   return (
-    <details className="section" open={i === 0}>
-      <summary><span className="cat-swatch" style={{ background: k.color }} />{k.name || 'Unnamed'}<span className="badge">×{k.count}</span></summary>
+    <details className="section">
+      <summary><span className="cat-swatch" style={{ background: k.color }} />{k.name || 'Unnamed'}<span className="badge">×{k.count}{k.mergeInto ? ` → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? ''}` : ''}</span></summary>
       <div className="section-body">
         <Row>
           <Text label="Name" value={k.name} onChange={(v) => set([...b, 'name'], v)} />
@@ -133,13 +144,6 @@ function CategoryEditor({ k, i, set, images, cfg, onUpload, remove }: { k: Categ
         {k.lives > 0 ? <Sel label="Loses a life when hit by" value={k.loseLifeOn} onChange={(v) => set([...b, 'loseLifeOn'], v)} options={[
           { value: 'otherCategory', label: 'Another character type' }, { value: 'anyCharacter', label: 'Any character' }, { value: 'wall', label: 'A wall' }, { value: 'obstacle', label: 'An obstacle' }, { value: 'never', label: 'Never' }
         ]} /> : null}
-        <Sel label="Evolution: two of these that touch become" value={k.mergeInto ?? ''} onChange={(v) => set([...b, 'mergeInto'], v || null)} options={[
-          { value: '', label: '— nothing, they just bounce —' }, ...cfg.categories.filter((o) => o.id !== k.id).map((o) => ({ value: o.id, label: o.name || 'Unnamed' }))
-        ]} />
-        {k.mergeInto ? <>
-          <Num label="Min. impact to merge (0 = any touch)" unit="px/s" value={k.mergeMinImpact} onChange={(v) => set([...b, 'mergeMinImpact'], Math.max(0, v))} min={0} step={50} />
-          <p className="hint">The two fuse into one character of the chosen type, with its size and picture, where they met. Its sound is under Collision sounds → Evolutions.</p>
-        </> : null}
         <div className="toolbar"><button className="btn btn-sm btn-danger" onClick={remove} disabled={cfg.categories.length <= 1}>Remove type</button></div>
       </div>
     </details>

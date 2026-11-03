@@ -15,7 +15,14 @@ export function setIn<T>(obj: T, path: (string | number)[], value: unknown): T {
 
 export function useConfig(initial: Config) {
   const [cfg, setCfg] = useState<Config>(() => initial);
-  const set = useCallback((path: (string | number)[], value: unknown) => setCfg((c) => setIn(c, path, value)), []);
+  const set = useCallback((path: (string | number)[], value: unknown) => setCfg((c) => {
+    const next = setIn(c, path, value);
+    if (path[0] !== 'categories') return next;
+    // category ids / merge targets changed → keep the pair and merge sound slots in step
+    const d = { ...next, categories: next.categories.map((k) => ({ ...k })), audio: { ...next.audio } };
+    ensurePairs(d);
+    return d;
+  }), []);
   // Structural edits (add/remove categories or obstacles): mutate a shallow-cloned draft, assets untouched.
   const patch = useCallback((fn: (draft: Config) => void) => setCfg((c) => {
     const draft: Config = JSON.parse(JSON.stringify({ ...c, assets: [] }));

@@ -24,6 +24,12 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
   return (
     <div>
       <h2>Simulation</h2>
+      <Section title="Presets" open>
+        <p className="hint">Starting points: each one sets the arena, obstacles, physics and (for Evolution) the merge chain. Everything stays editable afterwards.</p>
+        <ul className="preset-list">
+          {ARENA_PRESETS.map((pr) => <li key={pr.name}><button className="btn btn-sm" onClick={() => replace(pr.apply(cfg))}>{pr.name}</button><span>{pr.description}</span></li>)}
+        </ul>
+      </Section>
       <Section title="Run" open>
         <Text label="Name" value={cfg.name} onChange={(v) => set(['name'], v)} />
         <Row>
@@ -76,9 +82,6 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
       </Section>
 
       <Section title="Arena">
-        <div className="toolbar">
-          {ARENA_PRESETS.map((pr) => <button key={pr.name} className="btn btn-sm" title={pr.description} onClick={() => replace(pr.apply(cfg))}>{pr.name}</button>)}
-        </div>
         <Sel label="Shape" value={a.type} onChange={(v) => set(['arena', 'type'], v)} options={[
           { value: 'circle', label: 'Circle' }, { value: 'circleGap', label: 'Circle with opening' }, { value: 'rect', label: 'Rectangle' }, { value: 'polygon', label: 'Polygon' }
         ]} />

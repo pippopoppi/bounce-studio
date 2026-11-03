@@ -91,3 +91,8 @@ select, .field input[type="number"], .field input[type="text"], .field select { 
   .layout[data-tab="settings"] .panel.left, .layout[data-tab="preview"] .center, .layout[data-tab="characters"] .panel.right { display: flex; flex-direction: column; }
   .panel { border: 0; }
 }
+
+.preset-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.preset-list li { display: flex; align-items: center; gap: 10px; }
+.preset-list li .btn { flex: 0 0 auto; min-width: 120px; }
+.preset-list li span { font-size: 12px; color: var(--muted, #9aa4b2); }
