@@ -57,6 +57,7 @@ export class AudioEngine {
     const ids = new Set<string>();
     const add = (s: SoundSlot) => { if (s.assetId) ids.add(s.assetId); };
     Object.values(this.cfg.pairs).forEach(add);
+    Object.values(this.cfg.merges ?? {}).forEach(add);
     [this.cfg.wall, this.cfg.obstacle, this.cfg.escape, this.cfg.eliminate, this.cfg.victory].forEach(add);
     if (this.cfg.music.assetId) ids.add(this.cfg.music.assetId);
     await Promise.all(Array.from(ids).map((id) => this.buffer(id)));

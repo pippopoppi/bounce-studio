@@ -34,6 +34,6 @@ export function useConfig(initial: Config) {
     [d.audio.wall, d.audio.obstacle, d.audio.escape, d.audio.eliminate, d.audio.victory, d.audio.music].forEach(clear);
     return d;
   }), []);
-  const replace = useCallback((c: Config) => setCfg(c), []);
+  const replace = useCallback((c: Config) => { const d = { ...c, categories: c.categories.map((k) => ({ ...k })), audio: { ...c.audio } }; ensurePairs(d); setCfg(d); }, []);
   return { cfg, set, patch, addAsset, removeAsset, replace };
 }

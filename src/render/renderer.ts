@@ -12,8 +12,9 @@ export class Effects {
   particles: Particle[] = [];
   squash = new Map<number, Squash>();
   flashes: { x: number; y: number; t: number; color: string }[] = [];
+  pops = new Map<number, number>(); // newly merged characters grow in
 
-  reset(): void { this.trails.clear(); this.particles = []; this.squash.clear(); this.flashes = []; }
+  reset(): void { this.trails.clear(); this.particles = []; this.squash.clear(); this.flashes = []; this.pops.clear(); }
 
   onEvents(events: SimEvent[], cfg: Config, colorOf: (cat: string) => string): void {
     for (const e of events) {
@@ -28,6 +29,15 @@ export class Effects {
             this.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0, max: 0.35 + Math.random() * 0.3, color, size: 4 + Math.random() * 6 });
           }
         }
+      } else if (e.type === 'merge') {
+        const color = colorOf(e.to);
+        this.flashes.push({ x: e.x, y: e.y, t: 0, color });
+        if (cfg.render.particles.enabled) for (let i = 0; i < 30; i++) {
+          const a = Math.random() * Math.PI * 2, s = 150 + Math.random() * 450;
+          this.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0, max: 0.5 + Math.random() * 0.4, color, size: 5 + Math.random() * 8 });
+        }
+        for (const id of e.bodies) this.trails.delete(id);
+        this.pops.set(e.body, 0);
       } else if (e.type === 'eliminate' || e.type === 'escape') {
         const color = colorOf(e.cat);
         this.flashes.push({ x: e.x, y: e.y, t: 0, color });
@@ -45,6 +55,7 @@ export class Effects {
     for (const p of this.particles) { p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 600 * dt; p.vx *= 0.98; }
     this.particles = this.particles.filter((p) => p.life < p.max);
     for (const [id, s] of this.squash) { s.t += dt; if (s.t > 0.14) this.squash.delete(id); }
+    for (const [id, t] of this.pops) { if (t + dt > 0.3) this.pops.delete(id); else this.pops.set(id, t + dt); }
     for (const f of this.flashes) f.t += dt;
     this.flashes = this.flashes.filter((f) => f.t < 0.5);
     if (cfg.render.trails.enabled) {
@@ -178,6 +189,8 @@ export class Renderer {
         const ang = Math.atan2(s.ny, s.nx);
         c.rotate(ang); c.scale(1 - k, 1 + k); c.rotate(-ang);
       }
+      const pop = fx.pops.get(b.id);
+      if (pop !== undefined) { const k = pop / 0.3; const sc = 0.4 + 0.6 * k + Math.sin(k * Math.PI) * 0.25; c.scale(sc, sc); }
       if (cat?.rotate) c.rotate(b.body.angle);
       c.beginPath(); c.arc(0, 0, rad, 0, Math.PI * 2); c.closePath();
       c.fillStyle = color; c.fill();

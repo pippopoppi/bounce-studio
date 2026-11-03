@@ -33,6 +33,8 @@ export interface Category {
   lives: number;               // 0 = never eliminated
   loseLifeOn: LoseLifeOn;
   minImpact: number;           // px/s: weaker hits do not count
+  mergeInto: string | null;    // evolution: two of this type that touch fuse into one of that category
+  mergeMinImpact: number;      // px/s: softer touches do not merge (0 = any contact)
 }
 
 export type ArenaType = 'circle' | 'rect' | 'polygon' | 'circleGap';
@@ -106,6 +108,7 @@ export interface AudioConfig {
   maxVoices: number;
   music: { assetId: string | null; volume: number; loop: boolean };
   pairs: Record<string, SoundSlot>;   // key = pairKey(idA, idB)
+  merges: Record<string, SoundSlot>;  // key = source category id (categories with mergeInto)
   wall: SoundSlot;
   obstacle: SoundSlot;
   escape: SoundSlot;
@@ -154,6 +157,7 @@ export type SimEvent =
   | { type: 'obstacle'; cat: string; intensity: number; x: number; y: number; nx: number; ny: number; body: number }
   | { type: 'escape'; cat: string; x: number; y: number; body: number }
   | { type: 'eliminate'; cat: string; x: number; y: number; body: number }
+  | { type: 'merge'; from: string; to: string; x: number; y: number; bodies: [number, number]; body: number }
   | { type: 'victory'; cat: string | null };
 
 export const CANVAS_W = 1080;

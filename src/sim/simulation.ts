@@ -138,6 +138,7 @@ export class Simulation {
       else if (e.type === 'obstacle') this.audio.play('obstacle', a.obstacle, when, e.intensity, simT);
       else if (e.type === 'escape') this.audio.play('escape', a.escape, when, 1500, simT);
       else if (e.type === 'eliminate') this.audio.play('eliminate', a.eliminate, when, 1500, simT);
+      else if (e.type === 'merge') this.audio.play('merge:' + e.from, a.merges[e.from], when, 1500, simT);
     }
     this.fx.onEvents(events, this.cfg, (cat) => this.cfg.categories.find((k) => k.id === cat)?.color ?? '#fff');
   }

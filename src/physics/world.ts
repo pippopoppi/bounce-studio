@@ -50,6 +50,7 @@ export class PhysicsWorld {
   private pending: Matter.Pair[] = [];
   private rng: Rng;
   private ballId = 1;
+  private mergeCount = 0;
 
   constructor(cfg: Config) {
     this.cfg = cfg;
@@ -363,6 +364,7 @@ export class PhysicsWorld {
   private collectCollisions(events: SimEvent[]): void {
     const pairs = this.pending; this.pending = [];
     const dead = new Set<number>();
+    const merges: [Ball, Ball, Category][] = [];
     for (const pair of pairs) {
       const A = pair.bodyA.parent ?? pair.bodyA, B = pair.bodyB.parent ?? pair.bodyB;
       const ba = this.ballOf(A), bb = this.ballOf(B);
@@ -371,6 +373,8 @@ export class PhysicsWorld {
       const sup = pair.collision.supports[0] ?? { x: (A.position.x + B.position.x) / 2, y: (A.position.y + B.position.y) / 2 };
       const n = pair.collision.normal;
       if (ba && bb) {
+        const target = ba.cat === bb.cat && !dead.has(ba.id) && !dead.has(bb.id) ? this.mergeTarget(ba.cat, intensity) : null;
+        if (target) { dead.add(ba.id); dead.add(bb.id); merges.push([ba, bb, target]); continue; }
         events.push({ type: 'pair', a: ba.cat, b: bb.cat, intensity, x: sup.x, y: sup.y, nx: n.x, ny: n.y, bodies: [ba.id, bb.id] });
         this.hit(ba, bb.cat === ba.cat ? 'anyCharacter' : 'otherCategory', intensity, dead);
         this.hit(bb, bb.cat === ba.cat ? 'anyCharacter' : 'otherCategory', intensity, dead);
@@ -381,11 +385,27 @@ export class PhysicsWorld {
         this.hit(ball, kind, intensity, dead);
       }
     }
+    for (const [a, b, target] of merges) {
+      // Two become one: the new character keeps the pair's momentum and appears where they met.
+      const pa = a.body.position, pb = b.body.position, ma = a.body.mass, mb = b.body.mass;
+      const p = { x: (pa.x * ma + pb.x * mb) / (ma + mb) - CENTER.x, y: (pa.y * ma + pb.y * mb) / (ma + mb) - CENTER.y };
+      const v = { x: ((a.body.velocity.x * ma + b.body.velocity.x * mb) / (ma + mb)) * 60, y: ((a.body.velocity.y * ma + b.body.velocity.y * mb) / (ma + mb)) * 60 };
+      const from = a.cat;
+      this.remove(a.id); this.remove(b.id); dead.delete(a.id); dead.delete(b.id);
+      const nb = this.addBall(target, this.mergeCount++, p, v);
+      events.push({ type: 'merge', from, to: target.id, x: p.x + CENTER.x, y: p.y + CENTER.y, bodies: [a.id, b.id], body: nb.id });
+    }
     for (const id of dead) {
       const b = this.balls.get(id); if (!b) continue;
       events.push({ type: 'eliminate', cat: b.cat, x: b.body.position.x, y: b.body.position.y, body: id });
       this.remove(id);
     }
+  }
+
+  private mergeTarget(catId: string, intensity: number): Category | null {
+    const cat = this.cfg.categories.find((c) => c.id === catId);
+    if (!cat || !cat.mergeInto || cat.mergeInto === cat.id || intensity < cat.mergeMinImpact) return null;
+    return this.cfg.categories.find((c) => c.id === cat.mergeInto) ?? null;
   }
 
   private hit(b: Ball, kind: 'anyCharacter' | 'otherCategory' | 'wall' | 'obstacle', intensity: number, dead: Set<number>): void {

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import Matter from 'matter-js';
 import { defaultConfig, ARENA_PRESETS } from '../src/core/defaults';
 import { PhysicsWorld, CENTER } from '../src/physics/world';
 import type { Config } from '../src/types';
@@ -111,5 +112,32 @@ describe('physics world', () => {
       expect(p.y - CENTER.y).toBeLessThan(cfg.arena.height / 2);
       expect(p.y).toBeGreaterThan(-400);
     }
+  });
+
+  it('merges two equal characters into the next form and chains to the final one', () => {
+    const cfg = defaultConfig();
+    cfg.physics.gravityEnabled = false;
+    cfg.categories[0].mergeInto = 'cat_blue'; cfg.categories[1].mergeInto = 'cat_yellow';
+    cfg.categories[0].count = 4; cfg.categories[1].count = 0; cfg.categories[2].count = 0;
+    cfg.categories[0].spawn = { mode: 'manual', positions: [{ x: -300, y: 0 }, { x: 300, y: 0 }, { x: 0, y: -300 }, { x: 0, y: 300 }], velocityMode: 'zero', speed: 0, angle: 0, speedJitter: 0 };
+    const w = new PhysicsWorld(cfg), dt = 1 / cfg.physics.timeStep;
+    for (const b of w.balls.values()) { const p = b.body.position; Matter.Body.setVelocity(b.body, { x: (CENTER.x - p.x) / 60, y: (CENTER.y - p.y) / 60 }); } // 600 px/s towards the centre
+    const merges: string[] = [];
+    for (let i = 0; i < 6 * cfg.physics.timeStep; i++) for (const e of w.step(dt)) if (e.type === 'merge') merges.push(e.from + '>' + e.to);
+    expect(merges.filter((m) => m === 'cat_red>cat_blue').length).toBe(2);
+    expect(merges.filter((m) => m === 'cat_blue>cat_yellow').length).toBe(1);
+    expect(w.balls.size).toBe(1);
+    expect(Array.from(w.balls.values())[0].cat).toBe('cat_yellow');
+    expect(w.counts()).toEqual({ cat_red: 0, cat_blue: 0, cat_yellow: 1 });
+  });
+  it('Evolution preset: characters merge up the chain from the pipe', () => {
+    const cfg = ARENA_PRESETS.find((p) => p.name === 'Evolution')!.apply(defaultConfig());
+    const w = new PhysicsWorld(cfg), dt = 1 / cfg.physics.timeStep;
+    let merges = 0;
+    for (let i = 0; i < 40 * cfg.physics.timeStep; i++) for (const e of w.step(dt)) if (e.type === 'merge') merges++;
+    expect(w.waiting()).toBe(0);
+    expect(merges).toBeGreaterThan(5);
+    expect(w.alive()).toBe(16 - merges);
+    expect(Object.values(w.counts()).reduce((a, b) => a + b, 0)).toBe(w.balls.size);
   });
 });

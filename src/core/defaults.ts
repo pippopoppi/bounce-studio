@@ -28,6 +28,7 @@ export function newCategory(partial: Partial<Category> & { id: string; name: str
   return {
     imageAssetId: null, radius: 60, mass: 1, restitution: 0.95, friction: 0.02, frictionAir: 0,
     count: 4, spawn: defaultSpawn(), rotate: true, lives: 0, loseLifeOn: 'never', minImpact: 300,
+    mergeInto: null, mergeMinImpact: 0,
     ...partial
   };
 }
@@ -88,6 +89,7 @@ export function defaultConfig(): Config {
       masterVolume: 0.9, maxVoices: 12,
       music: { assetId: BUILTIN_MUSIC, volume: 0.5, loop: true },
       pairs,
+      merges: {},
       wall: soundSlot('builtin:knock', 0.5),
       obstacle: soundSlot('builtin:knock', 0.6),
       escape: soundSlot('builtin:whoosh', 0.8),
@@ -140,6 +142,42 @@ export const ARENA_PRESETS: ArenaPreset[] = [
         { ...newObstacle('segment', 'ob_bar'), x: -40, y: 230, w: 280, h: 18, angularVelocity: 80, color: '#ffffff' }
       ]
     })
+  },
+  {
+    name: 'Evolution',
+    description: 'Pipe drop with a merge chain: two equal characters that touch fuse into the next form. Last form standing wins.',
+    apply: (c) => {
+      const tiers = [
+        { id: 'ev_1', name: 'Seed', color: '#8d6e63', radius: 42, img: 'img_ev1', mouth: 'flat' as const, pitch: 0 },
+        { id: 'ev_2', name: 'Sprout', color: '#66bb6a', radius: 56, img: 'img_ev2', mouth: 'o' as const, pitch: 4 },
+        { id: 'ev_3', name: 'Flower', color: '#ec407a', radius: 74, img: 'img_ev3', mouth: 'smile' as const, pitch: 7 },
+        { id: 'ev_4', name: 'Tree', color: '#26c6da', radius: 96, img: 'img_ev4', mouth: 'smile' as const, pitch: 12 },
+        { id: 'ev_5', name: 'Star', color: '#ffd54f', radius: 124, img: 'img_ev5', mouth: 'smile' as const, pitch: 19 }
+      ];
+      const categories = tiers.map((t, i) => newCategory({
+        id: t.id, name: t.name, color: t.color, imageAssetId: t.img, radius: t.radius, mass: 1 + i * 0.8, restitution: 0.75,
+        count: i === 0 ? 16 : 0, spawn: { ...defaultSpawn(), mode: 'pipe', velocityMode: 'fixed', speed: 200 },
+        mergeInto: tiers[i + 1]?.id ?? null, mergeMinImpact: 0
+      }));
+      const assets = [...c.assets.filter((a) => !a.id.startsWith('img_ev')), ...tiers.map((t) => ({ id: t.img, kind: 'image' as const, name: t.name.toLowerCase() + '.svg', dataUrl: faceSvg(t.color, t.mouth) }))];
+      const merges: Record<string, SoundSlot> = {};
+      tiers.forEach((t) => { merges[t.id] = { ...soundSlot('builtin:chime', 0.9), pitch: t.pitch, cooldown: 0, intensityScaling: false }; });
+      return {
+        ...c,
+        autoStop: 'lastCharacter',
+        duration: 60,
+        arena: { ...defaultArena(), type: 'circle', radius: 470, wallThickness: 28, pipe: { ...defaultPipe(), enabled: true, interval: 1.2, startDelay: 0.5, width: 150 } },
+        physics: { ...c.physics, gravityEnabled: true, gravityX: 0, gravityY: 1, periodicImpulse: { enabled: true, every: 4, strength: 500 } },
+        categories,
+        assets,
+        audio: { ...c.audio, merges, pairs: {} },
+        render: { ...c.render, wallStyle: 'rainbow', background: '#000000', arenaFill: '#000000', hudPosition: 'bottom', title: 'Will it reach the final form?' },
+        obstacles: [
+          { ...newObstacle('circle', 'ob_l'), x: -200, y: -120, r: 40, friction: 0, restitution: 0.9, color: '#ffffff' },
+          { ...newObstacle('circle', 'ob_r'), x: 210, y: -60, r: 40, friction: 0, restitution: 0.9, color: '#ffffff' }
+        ]
+      };
+    }
   },
   {
     name: 'Zero-G chaos',
