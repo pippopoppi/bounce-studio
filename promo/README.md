@@ -10,3 +10,11 @@ variante (non tutti i seed arrivano alla forma finale entro la durata).
 
 I loghi dei browser appartengono ai rispettivi proprietari e sono usati solo a scopo illustrativo; quattro provengono da
 Wikimedia Commons, l'icona di Safari è disegnata a mano.
+
+## Vivek → Vance → Vance meme → Trump
+
+`vivek-to-trump.json`: stessa meccanica, catena a quattro livelli. Sedici *Vivek* entrano dal tubo; due Vivek diventano un
+*JD Vance*, due Vance diventano un *Vance meme* (caricatura con le guance gonfie), due Vance meme diventano un *Trump*, e Trump
+non si trasforma più: continua a rimbalzare. Con il seed 5 tutti sono diventati Trump dopo circa 36 s; la durata è di 48 s.
+Le foto sono ritratti ufficiali (pubblico dominio) e, per Vivek Ramaswamy, una foto di Gage Skidmore (CC BY-SA 2.0, Wikimedia
+Commons); la caricatura è generata dal ritratto. Per usare la vera immagine del meme: in Characters → "Vance meme" → Upload image.
