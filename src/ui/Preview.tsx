@@ -49,6 +49,7 @@ export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
         <Section title="Export video" open>
           <div className="row-3">
             <Sel label="Format" value={cfg.export.format} onChange={(v) => set(['export', 'format'], v)} options={[{ value: 'auto', label: 'Auto (MP4 if possible)' }, { value: 'mp4', label: 'MP4' }, { value: 'webm', label: 'WebM' }]} />
+            <Num label="Hold last frame" unit="s" value={cfg.export.endHold} onChange={(v) => set(['export', 'endHold'], Math.min(10, Math.max(0, v)))} min={0} max={10} step={0.5} />
             <Num label="Frame rate" unit="fps" value={cfg.export.fps} onChange={(v) => set(['export', 'fps'], Math.min(60, Math.max(24, Math.round(v))))} min={24} max={60} />
             <Num label="Bitrate" unit="Mbps" value={cfg.export.bitrateMbps} onChange={(v) => set(['export', 'bitrateMbps'], Math.min(50, Math.max(1, v)))} min={1} max={50} />
           </div>

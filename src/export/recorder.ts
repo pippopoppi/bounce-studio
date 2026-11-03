@@ -41,7 +41,9 @@ export async function exportVideo(sim: Simulation, canvas: HTMLCanvasElement, au
   const poll = setInterval(() => { if (signal?.cancelled) { sim.pause(); clearInterval(poll); } }, 100);
   await Promise.race([finished, new Promise<void>((res) => { const i = setInterval(() => { if (signal?.cancelled) { clearInterval(i); res(); } }, 100); })]);
   clearInterval(poll);
-  await new Promise((r) => setTimeout(r, 400)); // let the last sounds/frames land in the recording
+  // Hold the final frame (winner text, last sounds) before stopping; keep drawing so the stream gets frames.
+  const hold = signal?.cancelled ? 0.4 : Math.max(0.4, cfg.endHold ?? 2.5);
+  await new Promise<void>((res) => { const t1 = performance.now(); const tick = () => { sim.draw(); if (performance.now() - t1 < hold * 1000) requestAnimationFrame(tick); else res(); }; tick(); });
   rec.stop();
   await stopped;
   sim.onStatus = prev;

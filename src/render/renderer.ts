@@ -253,7 +253,8 @@ export class Renderer {
       const text = name ? `${name} wins!` : 'Finished';
       c.font = 'bold 96px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 12; c.strokeStyle = 'rgba(0,0,0,0.6)';
-      c.strokeText(text, CANVAS_W / 2, CANVAS_H - 220); c.fillText(text, CANVAS_W / 2, CANVAS_H - 220);
+      const wy = bottom ? CANVAS_H * 0.5 : CANVAS_H - 220; // bottom HUD: the title sits down there, so announce in the middle
+      c.strokeText(text, CANVAS_W / 2, wy); c.fillText(text, CANVAS_W / 2, wy);
     }
     void time;
   }

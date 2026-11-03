@@ -103,7 +103,7 @@ export function defaultConfig(): Config {
       squash: { enabled: true, amount: 0.18 },
       labels: false, counter: true, title: '', hudPosition: 'top'
     },
-    export: { format: 'auto', fps: 60, bitrateMbps: 12 },
+    export: { format: 'auto', fps: 60, bitrateMbps: 12, endHold: 2.5 },
     assets
   };
 }

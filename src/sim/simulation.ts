@@ -158,10 +158,23 @@ export class Simulation {
     }
     this.state = 'finished';
     this.stopLoop();
+    this.settle();
     if (this.audio.context) this.audio.play('victory', this.cfg.audio.victory, this.audio.context.currentTime, 1500, this.world.time);
     this.audio.stopMusic();
     const rs = this.finishResolvers; this.finishResolvers = []; rs.forEach((r) => r());
     return true;
+  }
+
+  // After the end, let the visual effects (pop-in of a final merge, particles) play out on the wall clock.
+  private settle(): void {
+    const t0 = performance.now(); let last = t0;
+    const tick = () => {
+      if (this.state !== 'finished') return;
+      const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      this.fx.update(dt, this.world, this.cfg); this.draw();
+      if (now - t0 < 1500) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   draw(): void {
