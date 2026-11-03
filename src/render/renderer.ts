@@ -37,7 +37,7 @@ export class Effects {
           this.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0, max: 0.5 + Math.random() * 0.4, color, size: 5 + Math.random() * 8 });
         }
         for (const id of e.bodies) this.trails.delete(id);
-        this.pops.set(e.body, 0);
+        if (cfg.render.mergePop) this.pops.set(e.body, 0);
       } else if (e.type === 'eliminate' || e.type === 'escape') {
         const color = colorOf(e.cat);
         this.flashes.push({ x: e.x, y: e.y, t: 0, color });

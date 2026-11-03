@@ -15,6 +15,6 @@ Wikimedia Commons, l'icona di Safari è disegnata a mano.
 
 `vivek-to-trump.json`: stessa meccanica, catena a quattro livelli. Sedici *Vivek* entrano dal tubo; due Vivek diventano un
 *JD Vance*, due Vance diventano un *Vance meme* (caricatura con le guance gonfie), due Vance meme diventano un *Trump*, e Trump
-non si trasforma più: continua a rimbalzare. Con il seed 5 tutti sono diventati Trump dopo circa 36 s; la durata è di 48 s.
+non si trasforma più: continua a rimbalzare. Tutti i livelli hanno la stessa dimensione (raggio 80 px) e la fusione è uno scambio istantaneo. Con il seed 10 tutti sono diventati Trump dopo circa 33 s; la durata è di 45 s.
 Le foto sono ritratti ufficiali (pubblico dominio) e, per Vivek Ramaswamy, una foto di Gage Skidmore (CC BY-SA 2.0, Wikimedia
 Commons); la caricatura è generata dal ritratto. Per usare la vera immagine del meme: in Characters → "Vance meme" → Upload image.

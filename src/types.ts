@@ -128,7 +128,8 @@ export interface RenderConfig {
   labels: boolean;
   counter: boolean;
   title: string;
-  hudPosition: 'top' | 'bottom'; // counter and title at the top or below the arena (e.g. when a pipe is at the top)
+  hudPosition: 'top' | 'bottom';
+  mergePop: boolean;           // merged character grows in (true) or simply replaces the pair (false) // counter and title at the top or below the arena (e.g. when a pipe is at the top)
 }
 
 export interface ExportConfig { format: 'auto' | 'webm' | 'mp4'; fps: number; bitrateMbps: number; endHold: number } // endHold: seconds the final frame stays on screen

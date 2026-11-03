@@ -155,6 +155,7 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
         {r.particles.enabled ? <Num label="Particles per hit" value={r.particles.amount} onChange={(v) => set(['render', 'particles', 'amount'], Math.max(1, Math.round(v)))} min={1} max={40} /> : null}
         <Check label="Squash & stretch on impact" checked={r.squash.enabled} onChange={(v) => set(['render', 'squash', 'enabled'], v)} />
         {r.squash.enabled ? <Num label="Squash amount" value={r.squash.amount} onChange={(v) => set(['render', 'squash', 'amount'], Math.min(0.6, Math.max(0, v)))} min={0} max={0.6} step={0.02} /> : null}
+        <Check label="Merged characters grow in (off = instant swap)" checked={r.mergePop} onChange={(v) => set(['render', 'mergePop'], v)} />
         <Check label="Character labels" checked={r.labels} onChange={(v) => set(['render', 'labels'], v)} />
         <Check label="Live counter" checked={r.counter} onChange={(v) => set(['render', 'counter'], v)} />
         <Row>
