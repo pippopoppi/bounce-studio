@@ -32,6 +32,12 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Prop
           remove={() => patch((d) => { d.categories.splice(i, 1); })} />
       ))}
       <div className="toolbar"><button className="btn btn-primary" onClick={addCategory}>+ Add character type</button></div>
+      <Section title="Size of all types" open>
+        <Row>
+          <Num label="Radius for every type" unit="px" value={cfg.categories[0]?.radius ?? 60} onChange={(v) => patch((d) => { d.categories.forEach((k) => { k.radius = Math.max(6, v); }); })} min={6} max={300} step={5} />
+        </Row>
+        <p className="hint">Sets the radius of every character type at once. Each type also has its own Radius field inside it, for sizes that differ per type (e.g. growing with each evolution).</p>
+      </Section>
 
       <h2>Evolution</h2>
       <Section title="Merge chain" open badge={String(cfg.categories.filter((k) => k.mergeInto).length || '')}>

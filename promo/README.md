@@ -17,4 +17,4 @@ Wikimedia Commons, l'icona di Safari è disegnata a mano.
 *JD Vance*, due Vance diventano un *Vance meme* (caricatura con le guance gonfie), due Vance meme diventano un *Trump*, e Trump
 non si trasforma più: continua a rimbalzare. Tutti i livelli hanno la stessa dimensione (raggio 80 px) e la fusione è uno scambio istantaneo. Con il seed 10 tutti sono diventati Trump dopo circa 33 s; la durata è di 45 s.
 Le foto sono ritratti ufficiali (pubblico dominio) e, per Vivek Ramaswamy, una foto di Gage Skidmore (CC BY-SA 2.0, Wikimedia
-Commons); la caricatura è generata dal ritratto. Per usare la vera immagine del meme: in Characters → "Vance meme" → Upload image.
+Commons); il "Vance meme" è l'immagine virale fornita dall'autore. Per cambiare un volto: Characters → tipo → Upload image.
