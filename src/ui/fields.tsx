@@ -1,12 +1,19 @@
-import React, { useId } from 'react';
+import React, { useId, useState } from 'react';
 
 export function Num({ label, value, onChange, min, max, step = 1, unit }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; unit?: string }) {
   const id = useId();
+  // While the box has focus we show exactly what the user typed, so a clamp in the
+  // handler (e.g. a minimum of 6) cannot rewrite "2" into "6" halfway through typing "200".
+  // On blur the box snaps to the committed (clamped) value.
+  const [text, setText] = useState<string | null>(null);
+  const shown = text !== null ? text : String(Number.isFinite(value) ? value : 0);
   return (
     <label className="field" htmlFor={id}>
       <span className="field-label">{label}{unit ? <small> {unit}</small> : null}</span>
-      <input id={id} type="number" value={Number.isFinite(value) ? value : 0} min={min} max={max} step={step}
-        onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) onChange(v); }} />
+      <input id={id} type="number" value={shown} min={min} max={max} step={step}
+        onFocus={() => setText(String(Number.isFinite(value) ? value : 0))}
+        onBlur={() => setText(null)}
+        onChange={(e) => { setText(e.target.value); const v = parseFloat(e.target.value); if (Number.isFinite(v)) onChange(v); }} />
     </label>
   );
 }
