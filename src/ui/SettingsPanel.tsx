@@ -183,6 +183,8 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
         <Check label="Merged characters grow in (off = instant swap)" checked={r.mergePop} onChange={(v) => set(['render', 'mergePop'], v)} />
         <Check label="Character labels" checked={r.labels} onChange={(v) => set(['render', 'labels'], v)} />
         <Check label="Live counter" checked={r.counter} onChange={(v) => set(['render', 'counter'], v)} />
+        {r.counter ? <Sel label="Counter style" value={r.counterStyle} onChange={(v) => set(['render', 'counterStyle'], v)} options={[{ value: 'perType', label: 'One number per type' }, { value: 'total', label: 'Total left (“12 left”)' }]} /> : null}
+        <Check label="Announce eliminations (“Brazil is out!”)" checked={r.outBanner} onChange={(v) => set(['render', 'outBanner'], v)} />
         <Row>
           <Text label="Title text" value={r.title} placeholder="shown with the counter" onChange={(v) => set(['render', 'title'], v)} />
           <Sel label="Counter & title" value={r.hudPosition} onChange={(v) => set(['render', 'hudPosition'], v)} options={[{ value: 'top', label: 'At the top' }, { value: 'bottom', label: 'At the bottom' }]} />

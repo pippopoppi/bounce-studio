@@ -102,7 +102,7 @@ export function defaultConfig(): Config {
       trails: { enabled: true, length: 14, width: 0.5 },
       particles: { enabled: true, amount: 6 },
       squash: { enabled: true, amount: 0.18 },
-      labels: false, counter: true, title: '', hudPosition: 'top', mergePop: true
+      labels: false, counter: true, counterStyle: 'perType', outBanner: false, title: '', hudPosition: 'top', mergePop: true
     },
     export: { format: 'auto', fps: 60, bitrateMbps: 12, endHold: 2.5 },
     assets

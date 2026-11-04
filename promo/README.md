@@ -45,3 +45,11 @@ ai rispettivi proprietari; sono usati solo a scopo illustrativo.
 Tutti questi JSON compaiono in Bounce Studio in Settings → **Templates** (elenco e descrizioni in `templates.json`): scegli e premi
 **Load template**. Al build il sito li copia in `templates/`, quindi per aggiungerne uno basta mettere il file in questa cartella e
 una riga in `templates.json`.
+
+## Quale paese sopravvive? (battaglia di bandiere)
+
+`countries-escape.json`: sedici bandiere in un anello arcobaleno che ruota con un'apertura. Chi esce è eliminato («France is out!»),
+in alto il contatore «N left», l'ultima bandiera dentro vince. Pensato per i video brevi: 5 eliminazioni nei primi 4 secondi come
+gancio, poi il ritmo rallenta fino a un duello finale di circa 9 s. Con il seed 29 vince il Brasile contro la Turchia dopo circa 27 s
+(Chrome/Edge; anche Firefox, a 29,7 s). Per un altro vincitore basta cambiare il seed (🎲 New seed). Bandiere nazionali da Wikimedia
+Commons (pubblico dominio).

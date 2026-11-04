@@ -1,6 +1,27 @@
 [
-  { "file": "ai-to-claude.json", "name": "AI comparison: 2 ChatGPT = 1 Claude", "description": "Grok → Gemini → ChatGPT → Claude. Two of a kind merge into the next; Claude stays Claude." },
-  { "file": "planets-to-sun.json", "name": "Planets: Moon → Earth → Jupiter → Sun", "description": "NASA photos; two Suns colliding play the Apollo 13 radio." },
-  { "file": "vivek-to-trump.json", "name": "Vivek → Vance → Vance meme → Trump", "description": "Big rainbow ring, 2000×2200; two Trumps colliding play the bing / hear ye clip." },
-  { "file": "browsers-evolution.json", "name": "Browsers: Explorer → Edge → Safari → Chrome → Brave", "description": "The original evolution video, 1080×1920." }
+  {
+    "file": "countries-escape.json",
+    "name": "Which country survives? (flag battle)",
+    "description": "16 flags in a spinning rainbow ring with a gap. Fall out and you are eliminated; last one inside wins. Seed 29: Brazil wins after a 9 s duel with Turkey (Chrome/Edge)."
+  },
+  {
+    "file": "ai-to-claude.json",
+    "name": "AI comparison: 2 ChatGPT = 1 Claude",
+    "description": "Grok → Gemini → ChatGPT → Claude. Two of a kind merge into the next; Claude stays Claude."
+  },
+  {
+    "file": "planets-to-sun.json",
+    "name": "Planets: Moon → Earth → Jupiter → Sun",
+    "description": "NASA photos; two Suns colliding play the Apollo 13 radio."
+  },
+  {
+    "file": "vivek-to-trump.json",
+    "name": "Vivek → Vance → Vance meme → Trump",
+    "description": "Big rainbow ring, 2000×2200; two Trumps colliding play the bing / hear ye clip."
+  },
+  {
+    "file": "browsers-evolution.json",
+    "name": "Browsers: Explorer → Edge → Safari → Chrome → Brave",
+    "description": "The original evolution video, 1080×1920."
+  }
 ]

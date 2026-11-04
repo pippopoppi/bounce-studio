@@ -154,3 +154,19 @@ describe('canvas size', () => {
   });
 });
 
+
+describe('templates', () => {
+  it('every template in promo/templates.json loads and runs', async () => {
+    const { normalizeConfig } = await import('../src/core/configio');
+    const files = import.meta.glob('../promo/*.json', { eager: true, import: 'default' }) as Record<string, unknown>;
+    const list = files['../promo/templates.json'] as { file: string }[];
+    expect(list.length).toBeGreaterThan(0);
+    for (const t of list) {
+      expect(files['../promo/' + t.file], t.file).toBeTruthy();
+      const cfg = normalizeConfig(files['../promo/' + t.file]);
+      const w = new PhysicsWorld(cfg);
+      for (let i = 0; i < cfg.physics.timeStep; i++) w.step(1 / cfg.physics.timeStep);
+      expect(w.alive()).toBeGreaterThan(0);
+    }
+  });
+});

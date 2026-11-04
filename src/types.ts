@@ -129,6 +129,8 @@ export interface RenderConfig {
   squash: { enabled: boolean; amount: number };
   labels: boolean;
   counter: boolean;
+  counterStyle: 'perType' | 'total'; // one number per type, or a single "N left"
+  outBanner: boolean;          // "<name> is out!" banner when a character escapes or is eliminated
   title: string;
   hudPosition: 'top' | 'bottom';
   mergePop: boolean;           // merged character grows in (true) or simply replaces the pair (false) // counter and title at the top or below the arena (e.g. when a pipe is at the top)

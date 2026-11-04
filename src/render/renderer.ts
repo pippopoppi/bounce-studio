@@ -11,8 +11,9 @@ export class Effects {
   squash = new Map<number, Squash>();
   flashes: { x: number; y: number; t: number; color: string }[] = [];
   pops = new Map<number, number>(); // newly merged characters grow in
+  banners: { text: string; color: string; t: number }[] = []; // "X is out!"
 
-  reset(): void { this.trails.clear(); this.particles = []; this.squash.clear(); this.flashes = []; this.pops.clear(); }
+  reset(): void { this.trails.clear(); this.particles = []; this.squash.clear(); this.flashes = []; this.pops.clear(); this.banners = []; }
 
   onEvents(events: SimEvent[], cfg: Config, colorOf: (cat: string) => string): void {
     for (const e of events) {
@@ -44,6 +45,10 @@ export class Effects {
           this.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0, max: 0.6 + Math.random() * 0.4, color, size: 6 + Math.random() * 8 });
         }
         this.trails.delete(e.body);
+        if (cfg.render.outBanner) {
+          const name = cfg.categories.find((k) => k.id === e.cat)?.name || 'One';
+          this.banners.push({ text: `${name} is out!`, color, t: 0 });
+        }
       }
     }
   }
@@ -56,6 +61,8 @@ export class Effects {
     for (const [id, t] of this.pops) { if (t + dt > 0.3) this.pops.delete(id); else this.pops.set(id, t + dt); }
     for (const f of this.flashes) f.t += dt;
     this.flashes = this.flashes.filter((f) => f.t < 0.5);
+    for (const b of this.banners) b.t += dt;
+    this.banners = this.banners.filter((b) => b.t < 1.6);
     if (cfg.render.trails.enabled) {
       for (const b of world.balls.values()) {
         let tr = this.trails.get(b.id); if (!tr) { tr = []; this.trails.set(b.id, tr); }
@@ -102,7 +109,7 @@ export class Renderer {
     this.drawParticles(fx);
     this.drawBalls(world, cfg, fx);
     this.drawFlashes(fx);
-    this.drawHud(world, cfg, time, status, winner);
+    this.drawHud(world, cfg, time, status, winner, fx);
   }
 
   private colorOf(cfg: Config, cat: string): string { return cfg.categories.find((k) => k.id === cat)?.color ?? '#ffffff'; }
@@ -224,7 +231,7 @@ export class Renderer {
     c.globalAlpha = 1;
   }
 
-  private drawHud(world: PhysicsWorld, cfg: Config, time: number, status: string, winner: string | null): void {
+  private drawHud(world: PhysicsWorld, cfg: Config, time: number, status: string, winner: string | null, fx: Effects): void {
     const c = this.ctx, r = cfg.render, W = cfg.canvas.width, H = cfg.canvas.height;
     c.textBaseline = 'middle';
     const bottom = r.hudPosition === 'bottom';
@@ -234,7 +241,13 @@ export class Renderer {
       c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
       c.strokeText(r.title, W / 2, y); c.fillText(r.title, W / 2, y);
     }
-    if (r.counter) {
+    if (r.counter && r.counterStyle === 'total') {
+      const y = bottom ? H - 160 : r.title ? 200 : 120;
+      const s = `${world.alive()} left`;
+      c.font = 'bold 64px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
+      c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
+      c.strokeText(s, W / 2, y); c.fillText(s, W / 2, y);
+    } else if (r.counter) {
       const counts = world.counts();
       const cats = cfg.categories;
       const w = W / Math.max(1, cats.length);
@@ -250,6 +263,20 @@ export class Renderer {
         c.fillText(k.name.slice(0, 12), x - 20, y + 46);
       });
     }
+    // Elimination banners: newest at the front, older ones stacked above and fading.
+    const recent = status === 'finished' ? [] : fx.banners.slice(-2); // the winner text takes over at the end
+    recent.forEach((b, i) => {
+      const k = recent.length - 1 - i;
+      const alpha = Math.min(1, b.t / 0.12) * Math.min(1, (1.6 - b.t) / 0.4);
+      const y = (bottom ? H * 0.2 : H - 260) - k * 108 - Math.min(1, b.t / 0.25) * 16;
+      c.save(); c.globalAlpha = Math.max(0, alpha);
+      c.font = 'bold 66px system-ui, sans-serif'; c.textAlign = 'center';
+      const tw = c.measureText(b.text).width;
+      c.fillStyle = 'rgba(0,0,0,0.55)'; c.beginPath(); c.roundRect(W / 2 - tw / 2 - 30, y - 46, tw + 60, 92, 46); c.fill();
+      c.lineWidth = 6; c.strokeStyle = b.color; c.stroke();
+      c.fillStyle = '#ffffff'; c.fillText(b.text, W / 2, y + 2);
+      c.restore();
+    });
     if (status === 'finished') {
       const name = winner ? cfg.categories.find((k) => k.id === winner)?.name ?? '' : '';
       const text = name ? `${name} wins!` : 'Finished';
