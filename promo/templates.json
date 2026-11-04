@@ -1,0 +1,6 @@
+[
+  { "file": "ai-to-claude.json", "name": "AI comparison: 2 ChatGPT = 1 Claude", "description": "Grok → Gemini → ChatGPT → Claude. Two of a kind merge into the next; Claude stays Claude." },
+  { "file": "planets-to-sun.json", "name": "Planets: Moon → Earth → Jupiter → Sun", "description": "NASA photos; two Suns colliding play the Apollo 13 radio." },
+  { "file": "vivek-to-trump.json", "name": "Vivek → Vance → Vance meme → Trump", "description": "Big rainbow ring, 2000×2200; two Trumps colliding play the bing / hear ye clip." },
+  { "file": "browsers-evolution.json", "name": "Browsers: Explorer → Edge → Safari → Chrome → Brave", "description": "The original evolution video, 1080×1920." }
+]

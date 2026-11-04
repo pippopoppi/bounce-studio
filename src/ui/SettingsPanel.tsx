@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Config, Obstacle } from '../types';
 import { ARENA_PRESETS, newObstacle } from '../core/defaults';
 import { parseConfig, serializeConfig } from '../core/configio';
@@ -18,12 +18,36 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
     el.href = url; el.download = (cfg.name || 'simulation').replace(/[^\w-]+/g, '_') + '.json'; el.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+  // Templates: ready-made configs shipped with the site (templates/index.json → list, one JSON per template).
+  const [tpls, setTpls] = useState<{ file: string; name: string; description: string }[]>([]);
+  const [tpl, setTpl] = useState('');
+  const [tplBusy, setTplBusy] = useState(false);
+  useEffect(() => {
+    fetch(import.meta.env.BASE_URL + 'templates/index.json').then((r) => (r.ok ? r.json() : [])).then((l) => { setTpls(l); if (l[0]) setTpl(l[0].file); }).catch(() => setTpls([]));
+  }, []);
+  const loadTemplate = async () => {
+    const t = tpls.find((x) => x.file === tpl); if (!t) return;
+    if (!window.confirm(`Replace the current setup with “${t.name}”? Save JSON first if you want to keep it.`)) return;
+    setTplBusy(true);
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'templates/' + encodeURIComponent(t.file));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      replace(parseConfig(await r.text())); setErr('');
+    } catch (e) { setErr('Could not load template: ' + (e as Error).message); }
+    setTplBusy(false);
+  };
   const loadJson = async (f: File) => {
     try { replace(parseConfig(await f.text())); setErr(''); } catch (e) { setErr('Could not load: ' + (e as Error).message); }
   };
   return (
     <div>
       <h2>Simulation</h2>
+      {tpls.length ? <Section title="Templates" open>
+        <Sel label="Ready-made video" value={tpl} onChange={setTpl} options={tpls.map((t) => ({ value: t.file, label: t.name }))} />
+        <p className="hint">{tpls.find((t) => t.file === tpl)?.description}</p>
+        <div className="toolbar"><button className="btn btn-primary" onClick={() => void loadTemplate()} disabled={tplBusy}>{tplBusy ? 'Loading…' : 'Load template'}</button></div>
+        <p className="hint">Everything stays editable; Save JSON keeps your version.</p>
+      </Section> : null}
       <Section title="Presets" open>
         <p className="hint">Starting points: each one sets the arena, obstacles, physics and (for Evolution) the merge chain. Everything stays editable afterwards.</p>
         <ul className="preset-list">

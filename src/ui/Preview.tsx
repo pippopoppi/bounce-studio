@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Config } from '../types';
 import { CANVAS_SIZES } from '../types';
 import type { Simulation, SimStatus } from '../sim/simulation';
@@ -12,6 +12,57 @@ interface Props {
 }
 
 export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
+  // Preview zoom: 1 = whole frame fits the stage; above 1 the stage scrolls. Display only, the video is unaffected.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 400, h: 700 });
+  const [zoom, setZoom] = useState(1);
+  useLayoutEffect(() => {
+    const el = stageRef.current; if (!el) return;
+    const ro = new ResizeObserver(() => setBox({ w: el.clientWidth - 20, h: el.clientHeight - 20 }));
+    ro.observe(el); return () => ro.disconnect();
+  }, []);
+  const fit = Math.max(0.01, Math.min(box.w / cfg.canvas.width, box.h / cfg.canvas.height));
+  const scale = fit * zoom;
+  // Keep the point under the cursor (or the stage centre) in place while zooming: remember it, restore after the resize renders.
+  const anchor = useRef<{ fx: number; fy: number; px: number; py: number } | null>(null);
+  const zoomTo = (z: number, at?: { x: number; y: number }) => {
+    const el = stageRef.current; const nz = Math.min(8, Math.max(1, Math.round(z * 100) / 100));
+    if (!el || nz === zoom) return;
+    const px = at ? at.x : el.clientWidth / 2, py = at ? at.y : el.clientHeight / 2;
+    anchor.current = { fx: (el.scrollLeft + px) / Math.max(1, el.scrollWidth), fy: (el.scrollTop + py) / Math.max(1, el.scrollHeight), px, py };
+    setZoom(nz);
+  };
+  useLayoutEffect(() => {
+    const el = stageRef.current, a = anchor.current; if (!el || !a) return;
+    anchor.current = null;
+    el.scrollLeft = a.fx * el.scrollWidth - a.px; el.scrollTop = a.fy * el.scrollHeight - a.py;
+  }, [zoom]);
+  // Drag to pan while zoomed in.
+  const pan = useRef<{ x: number; y: number; l: number; t: number } | null>(null);
+  const onPanStart = (e: React.PointerEvent) => {
+    const el = stageRef.current; if (!el || zoom <= 1 || e.button !== 0) return;
+    pan.current = { x: e.clientX, y: e.clientY, l: el.scrollLeft, t: el.scrollTop };
+    el.setPointerCapture(e.pointerId);
+  };
+  const onPanMove = (e: React.PointerEvent) => {
+    const el = stageRef.current, p = pan.current; if (!el || !p) return;
+    el.scrollLeft = p.l - (e.clientX - p.x); el.scrollTop = p.t - (e.clientY - p.y);
+  };
+  const onPanEnd = () => { pan.current = null; };
+  // Native listener: React's wheel handlers are passive, so they cannot stop the browser's own Ctrl+wheel page zoom.
+  const zoomRef = useRef(zoomTo); zoomRef.current = zoomTo;
+  const zoomVal = useRef(zoom); zoomVal.current = zoom;
+  useEffect(() => {
+    const el = stageRef.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      zoomRef.current(zoomVal.current * (e.deltaY < 0 ? 1.15 : 1 / 1.15), { x: e.clientX - r.left, y: e.clientY - r.top });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
   const sizeKey = CANVAS_SIZES.some((o) => o.width === cfg.canvas.width && o.height === cfg.canvas.height) ? `${cfg.canvas.width}x${cfg.canvas.height}` : 'custom';
   const [muted, setMuted] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -36,7 +87,16 @@ export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
   const playing = status.state === 'playing';
   return (
     <div className="center">
-      <div className="stage"><canvas ref={canvasRef} aria-label="Simulation preview" style={{ aspectRatio: `${cfg.canvas.width} / ${cfg.canvas.height}` }} /></div>
+      <div className="stage-wrap">
+        <div className={'stage' + (zoom > 1 ? ' stage-zoomed' : '')} ref={stageRef} onPointerDown={onPanStart} onPointerMove={onPanMove} onPointerUp={onPanEnd} onPointerCancel={onPanEnd}>
+          <canvas ref={canvasRef} aria-label="Simulation preview" style={{ width: Math.round(cfg.canvas.width * scale), height: Math.round(cfg.canvas.height * scale) }} />
+        </div>
+        <div className="zoom" title="Preview zoom (only the view, not the video). Ctrl/⌘ + mouse wheel also zooms.">
+          <button className="btn btn-sm" onClick={() => zoomTo(zoom / 1.25)} disabled={zoom <= 1} aria-label="Zoom out">−</button>
+          <button className="btn btn-sm zoom-label" onClick={() => zoomTo(1)} title="Back to fit">{zoom === 1 ? 'Fit' : `${Math.round(zoom * 100)}%`}</button>
+          <button className="btn btn-sm" onClick={() => zoomTo(zoom * 1.25)} disabled={zoom >= 8} aria-label="Zoom in">+</button>
+        </div>
+      </div>
       <div className="transport">
         <button className="btn btn-primary" onClick={() => (playing ? sim?.pause() : sim?.play())} disabled={!sim || exporting}>{playing ? '⏸ Pause' : status.state === 'finished' ? '↻ Replay' : '▶ Play'}</button>
         <button className="btn" onClick={() => sim?.reset()} disabled={!sim || exporting}>⏮ Reset</button>

@@ -32,3 +32,16 @@ Immagini e audio da Wikimedia Commons: Luna — *FullMoon2010* di Gregory H. Rev
 Apollo 17 (NASA, pubblico dominio); Giove — Hubble, *Jupiter and its shrunken Great Red Spot* (NASA/ESA, pubblico dominio);
 Sole — Solar Dynamics Observatory AIA, 19 agosto 2010 (NASA, pubblico dominio); audio — Apollo 13, *Houston, we've had a problem*
 (NASA, pubblico dominio).
+
+## Confronto tra AI: 2 ChatGPT = 1 Claude
+
+`ai-to-claude.json`: confronto scherzoso, non un'evoluzione. Sedici *Grok* entrano dal tubo; due Grok valgono un *Gemini*, due Gemini
+un *ChatGPT*, due ChatGPT un *Claude*, e Claude resta Claude. Stessa arena e stessa fisica del video dei pianeti (seed 2: tutti Claude
+dopo circa 28 s); quando due Claude si scontrano suona la fanfara integrata. I loghi provengono da Wikimedia Commons e appartengono
+ai rispettivi proprietari; sono usati solo a scopo illustrativo.
+
+## Modelli nello studio
+
+Tutti questi JSON compaiono in Bounce Studio in Settings → **Templates** (elenco e descrizioni in `templates.json`): scegli e premi
+**Load template**. Al build il sito li copia in `templates/`, quindi per aggiungerne uno basta mettere il file in questa cartella e
+una riga in `templates.json`.
