@@ -3,6 +3,7 @@ import type { Asset, Category, Config, SoundSlot } from '../types';
 import { pairKey } from '../types';
 import { BUILTIN_MUSIC, BUILTIN_SOUNDS, newCategory } from '../core/defaults';
 import { BUILTIN_LABELS } from '../audio/builtins';
+import { MELODIES } from '../audio/melodies';
 import { uid } from '../core/id';
 import { Check, Color, FileBtn, Num, Range, Row, Sel, Section, SummaryDelete, Text, readFileAsDataUrl } from './fields';
 import { ClipEditor } from './ClipEditor';
@@ -70,6 +71,23 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset, audio 
         </Row>
         <p className="hint">Music follows the simulation timeline: pause, reset and playback speed apply to it too.</p>
       </Section>
+      <Section title="Melody: a note on every bounce" open={cfg.audio.melody.enabled}>
+        <Check label="Each bounce plays the next note" checked={cfg.audio.melody.enabled} onChange={(v) => set(['audio', 'melody', 'enabled'], v)} />
+        <Sel label="Tune" value={MELODIES.find((t) => t.notes === cfg.audio.melody.notes)?.name ?? ''} onChange={(v) => { const t = MELODIES.find((x) => x.name === v); if (t) set(['audio', 'melody', 'notes'], t.notes); }}
+          options={[...MELODIES.map((t) => ({ value: t.name, label: t.name })), ...(MELODIES.some((t) => t.notes === cfg.audio.melody.notes) ? [] : [{ value: '', label: 'Custom (edited below)' }])]} />
+        <label className="field"><span className="field-label">Notes (e.g. C4 D#4 Bb3, chords C4+E4+G4)</span>
+          <textarea rows={4} value={cfg.audio.melody.notes} onChange={(e) => set(['audio', 'melody', 'notes'], e.target.value)} spellCheck={false} /></label>
+        <div className="row-3">
+          <Sel label="Instrument" value={cfg.audio.melody.instrument} onChange={(v) => set(['audio', 'melody', 'instrument'], v)} options={[{ value: 'piano', label: 'Piano' }, { value: 'bell', label: 'Bell' }, { value: 'pluck', label: 'Pluck' }, { value: 'chip', label: '8-bit' }]} />
+          <Num label="Volume" value={cfg.audio.melody.volume} onChange={(v) => set(['audio', 'melody', 'volume'], Math.min(2, Math.max(0, v)))} min={0} max={2} step={0.05} />
+          <Num label="Transpose" unit="st" value={cfg.audio.melody.transpose} onChange={(v) => set(['audio', 'melody', 'transpose'], Math.round(v))} min={-24} max={24} />
+        </div>
+        <Row>
+          <Sel label="Play on" value={cfg.audio.melody.on} onChange={(v) => set(['audio', 'melody', 'on'], v)} options={[{ value: 'wall', label: 'Wall bounces' }, { value: 'all', label: 'Every hit' }]} />
+          <Num label="Min. impact" unit="px/s" value={cfg.audio.melody.minImpact} onChange={(v) => set(['audio', 'melody', 'minImpact'], Math.max(0, v))} min={0} step={20} />
+        </Row>
+        <p className="hint">The tune starts over when it reaches the end. Tip: turn the wall sound off (Collision sounds → Events) so only the notes play.</p>
+      </Section>
 
       <h2>Collision sounds</h2>
       <Section title="Character vs character" open>
@@ -119,6 +137,11 @@ function CategoryEditor({ k, i, set, images, cfg, onUpload, remove }: { k: Categ
           <Num label="Count" value={k.count} onChange={(v) => set([...b, 'count'], Math.max(0, Math.round(v)))} min={0} max={200} />
           <Num label="Radius" unit="px" value={k.radius} onChange={(v) => set([...b, 'radius'], Math.max(6, v))} min={6} max={300} />
         </Row>
+        <Row>
+          <Num label="Grow per wall bounce" unit="px" value={k.growPerBounce} onChange={(v) => set([...b, 'growPerBounce'], Math.max(0, v))} min={0} max={100} step={0.5} />
+          <Num label="Max radius (0 = fill arena)" unit="px" value={k.growMax} onChange={(v) => set([...b, 'growMax'], Math.max(0, v))} min={0} step={10} />
+        </Row>
+        <Num label="Keep speed constant at (0 = off)" unit="px/s" value={k.keepSpeed} onChange={(v) => set([...b, 'keepSpeed'], Math.max(0, v))} min={0} step={50} />
         <Row>
           <Num label="Mass" value={k.mass} onChange={(v) => set([...b, 'mass'], Math.max(0.01, v))} min={0.01} step={0.1} />
           <Num label="Bounciness" value={k.restitution} onChange={(v) => set([...b, 'restitution'], Math.max(0, v))} min={0} max={1.5} step={0.05} />

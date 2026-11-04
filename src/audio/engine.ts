@@ -154,6 +154,42 @@ export class AudioEngine {
 
   resetCooldowns(): void { this.lastPlay.clear(); }
 
+  // Melody mode: one synthesized note (or chord) at AudioContext time `when`.
+  playNote(freqs: number[], when: number): void {
+    const m = this.cfg.melody;
+    if (!m || !this.ctx || !this.master || !freqs.length) return;
+    if (this.voices >= this.cfg.maxVoices) return;
+    const ctx = this.ctx, t0 = Math.max(when, ctx.currentTime);
+    const shape: Record<string, { decay: number; parts: [OscillatorType, number, number][] }> = {
+      piano: { decay: 1.3, parts: [['triangle', 1, 1], ['sine', 2, 0.35], ['sine', 3, 0.12]] },
+      bell: { decay: 2.2, parts: [['sine', 1, 1], ['sine', 2.76, 0.4], ['sine', 5.4, 0.15]] },
+      pluck: { decay: 0.55, parts: [['sawtooth', 1, 0.7], ['square', 0.5, 0.15]] },
+      chip: { decay: 0.28, parts: [['square', 1, 0.55]] }
+    };
+    const sh = shape[m.instrument] ?? shape.piano;
+    const out = ctx.createGain();
+    const level = Math.max(0, m.volume) * 0.5 / Math.sqrt(freqs.length);
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.exponentialRampToValueAtTime(Math.max(0.0002, level), t0 + 0.006);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + sh.decay);
+    let tail: AudioNode = out;
+    if (m.instrument === 'pluck') {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(4000, t0); lp.frequency.exponentialRampToValueAtTime(500, t0 + sh.decay);
+      out.connect(lp); tail = lp;
+    }
+    tail.connect(this.master);
+    const k = Math.pow(2, (m.transpose || 0) / 12);
+    const oscs: OscillatorNode[] = [];
+    for (const f of freqs) for (const [type, mult, amp] of sh.parts) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = f * k * mult; g.gain.value = amp;
+      o.connect(g).connect(out); o.start(t0); o.stop(t0 + sh.decay + 0.05); oscs.push(o);
+    }
+    this.voices += 1;
+    oscs[0].onended = () => { this.voices -= 1; out.disconnect(); if (tail !== out) tail.disconnect(); };
+  }
+
   async decodeForPreview(id: string): Promise<number> {
     await this.ensure();
     const b = await this.buffer(id);

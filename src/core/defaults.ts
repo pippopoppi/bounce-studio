@@ -1,5 +1,6 @@
 import type { ArenaConfig, Category, Config, Obstacle, PipeConfig, SoundSlot, SpawnConfig } from '../types';
 import { CANVAS_H, CANVAS_W, pairKey } from '../types';
+import { MELODIES } from '../audio/melodies';
 
 export const BUILTIN_SOUNDS = [
   'builtin:blip-low', 'builtin:blip-mid', 'builtin:blip-high', 'builtin:pop', 'builtin:knock',
@@ -28,7 +29,7 @@ export function newCategory(partial: Partial<Category> & { id: string; name: str
   return {
     imageAssetId: null, radius: 60, mass: 1, restitution: 0.95, friction: 0.02, frictionAir: 0,
     count: 4, spawn: defaultSpawn(), rotate: true, lives: 0, loseLifeOn: 'never', minImpact: 300,
-    mergeInto: null, mergeMinImpact: 0,
+    mergeInto: null, mergeMinImpact: 0, growPerBounce: 0, growMax: 0, keepSpeed: 0,
     ...partial
   };
 }
@@ -95,14 +96,15 @@ export function defaultConfig(): Config {
       obstacle: soundSlot('builtin:knock', 0.6),
       escape: soundSlot('builtin:whoosh', 0.8),
       eliminate: soundSlot('builtin:buzz', 0.8),
-      victory: soundSlot('builtin:fanfare', 0.9)
+      victory: soundSlot('builtin:fanfare', 0.9),
+      melody: { enabled: false, notes: MELODIES[0].notes, instrument: 'piano', volume: 0.8, transpose: 0, on: 'wall', minImpact: 60 }
     },
     render: {
       background: '#101418', arenaFill: '#1a2129', wallStyle: 'solid', obstaclesMatchWall: false, outlineWidth: 6, outlineColor: '',
       trails: { enabled: true, length: 14, width: 0.5 },
       particles: { enabled: true, amount: 6 },
       squash: { enabled: true, amount: 0.18 },
-      labels: false, counter: true, counterStyle: 'perType', outBanner: false, title: '', hudPosition: 'top', mergePop: true
+      labels: false, counter: true, counterStyle: 'perType', outBanner: false, endText: '', title: '', hudPosition: 'top', mergePop: true
     },
     export: { format: 'auto', fps: 60, bitrateMbps: 12, endHold: 2.5 },
     assets

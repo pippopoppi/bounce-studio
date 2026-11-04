@@ -67,7 +67,8 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
         <Sel label="Stop automatically" value={cfg.autoStop} onChange={(v) => set(['autoStop'], v)} options={[
           { value: 'never', label: 'At the end of the duration' },
           { value: 'lastCharacter', label: 'When one character is left' },
-          { value: 'lastCategory', label: 'When one category is left' }
+          { value: 'lastCategory', label: 'When one category is left' },
+          { value: 'grown', label: 'When the growing characters reach full size' }
         ]} />
         <div className="toolbar">
           <button className="btn" onClick={saveJson}>💾 Save JSON</button>
@@ -183,7 +184,8 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
         <Check label="Merged characters grow in (off = instant swap)" checked={r.mergePop} onChange={(v) => set(['render', 'mergePop'], v)} />
         <Check label="Character labels" checked={r.labels} onChange={(v) => set(['render', 'labels'], v)} />
         <Check label="Live counter" checked={r.counter} onChange={(v) => set(['render', 'counter'], v)} />
-        {r.counter ? <Sel label="Counter style" value={r.counterStyle} onChange={(v) => set(['render', 'counterStyle'], v)} options={[{ value: 'perType', label: 'One number per type' }, { value: 'total', label: 'Total left (“12 left”)' }]} /> : null}
+        {r.counter ? <Sel label="Counter style" value={r.counterStyle} onChange={(v) => set(['render', 'counterStyle'], v)} options={[{ value: 'perType', label: 'One number per type' }, { value: 'total', label: 'Total left (“12 left”)' }, { value: 'fill', label: 'How full the arena is (“73% full”)' }]} /> : null}
+        <Text label="End text" value={r.endText} placeholder="empty = “<name> wins!”" onChange={(v) => set(['render', 'endText'], v)} />
         <Check label="Announce eliminations (“Brazil is out!”)" checked={r.outBanner} onChange={(v) => set(['render', 'outBanner'], v)} />
         <Row>
           <Text label="Title text" value={r.title} placeholder="shown with the counter" onChange={(v) => set(['render', 'title'], v)} />

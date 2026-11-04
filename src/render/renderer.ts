@@ -241,9 +241,9 @@ export class Renderer {
       c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
       c.strokeText(r.title, W / 2, y); c.fillText(r.title, W / 2, y);
     }
-    if (r.counter && r.counterStyle === 'total') {
+    if (r.counter && (r.counterStyle === 'total' || r.counterStyle === 'fill')) {
       const y = bottom ? H - 160 : r.title ? 200 : 120;
-      const s = `${world.alive()} left`;
+      const s = r.counterStyle === 'fill' ? `${world.grown() ? 100 : Math.min(99, Math.floor(world.fill() * 100))}% full` : `${world.alive()} left`;
       c.font = 'bold 64px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
       c.strokeText(s, W / 2, y); c.fillText(s, W / 2, y);
@@ -279,7 +279,7 @@ export class Renderer {
     });
     if (status === 'finished') {
       const name = winner ? cfg.categories.find((k) => k.id === winner)?.name ?? '' : '';
-      const text = name ? `${name} wins!` : 'Finished';
+      const text = r.endText ? r.endText : name ? `${name} wins!` : 'Finished';
       c.font = 'bold 96px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 12; c.strokeStyle = 'rgba(0,0,0,0.6)';
       const wy = bottom ? H * 0.5 : H - 220; // bottom HUD: the title sits down there, so announce in the middle

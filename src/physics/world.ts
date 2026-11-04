@@ -7,6 +7,7 @@ import { Rng } from '../core/rng';
 const { Engine, Bodies, Body, Composite, Events, Common } = Matter;
 // Matter's velocity unit is px per 16.67 ms (one 60 Hz tick): px/s ÷ 60.
 const DEG = Math.PI / 180;
+const GROW_MIN_IMPACT = 80; // px/s: resting contact and grazes do not grow a character
 // Matter 0.20 accepts an `updateVelocity` flag (so moving static bodies push balls); the typings lag behind.
 const setPos = Body.setPosition as unknown as (b: Matter.Body, p: Vec, updateVelocity?: boolean) => void;
 const setAng = Body.setAngle as unknown as (b: Matter.Body, a: number, updateVelocity?: boolean) => void;
@@ -351,11 +352,14 @@ export class PhysicsWorld {
 
   private clampSpeeds(): void {
     const max = this.cfg.physics.maxSpeed;
-    if (!max) return;
-    const m = max / 60;
+    const m = max ? max / 60 : Infinity;
     for (const b of this.balls.values()) {
       const v = b.body.velocity, sp = Math.hypot(v.x, v.y);
-      if (sp > m) Body.setVelocity(b.body, { x: (v.x / sp) * m, y: (v.y / sp) * m });
+      const cat = this.cfg.categories.find((c) => c.id === b.cat);
+      const keep = cat && cat.keepSpeed > 0 ? Math.min(m, cat.keepSpeed / 60) : 0;
+      // Constant-speed characters: no energy drift, so the pacing is the same in every browser.
+      if (keep && sp > 1e-6) { if (Math.abs(sp - keep) > 1e-9) Body.setVelocity(b.body, { x: (v.x / sp) * keep, y: (v.y / sp) * keep }); }
+      else if (sp > m) Body.setVelocity(b.body, { x: (v.x / sp) * m, y: (v.y / sp) * m });
     }
   }
 
@@ -386,6 +390,7 @@ export class PhysicsWorld {
         const kind = other.label === 'obstacle' ? 'obstacle' : 'wall';
         events.push({ type: kind, cat: ball.cat, intensity, x: sup.x, y: sup.y, nx: n.x, ny: n.y, body: ball.id });
         this.hit(ball, kind, intensity, dead);
+        if (kind === 'wall' && intensity >= GROW_MIN_IMPACT) this.grow(ball);
       }
     }
     for (const [a, b, target] of merges) {
@@ -403,6 +408,39 @@ export class PhysicsWorld {
       events.push({ type: 'eliminate', cat: b.cat, x: b.body.position.x, y: b.body.position.y, body: id });
       this.remove(id);
     }
+  }
+
+  // Every wall bounce makes the character a little bigger, up to its maximum (never larger than the arena allows).
+  private grow(b: Ball): void {
+    const cat = this.cfg.categories.find((c) => c.id === b.cat);
+    if (!cat || !(cat.growPerBounce > 0)) return;
+    const cap = this.growCap(cat);
+    if (b.radius >= cap - 1e-6) return;
+    const r = Math.min(cap, b.radius + cat.growPerBounce);
+    Body.scale(b.body, r / b.radius, r / b.radius);
+    b.radius = r;
+  }
+  private growCap(cat: Category): number {
+    const room = this.innerRadius() * 0.97;
+    return cat.growMax > 0 ? Math.min(cat.growMax, room) : room;
+  }
+  // True when every growing character has reached its maximum size (and at least one grows).
+  grown(): boolean {
+    let any = false;
+    for (const b of this.balls.values()) {
+      const cat = this.cfg.categories.find((c) => c.id === b.cat);
+      if (!cat || !(cat.growPerBounce > 0)) continue;
+      any = true;
+      if (b.radius < this.growCap(cat) - 1e-6) return false;
+    }
+    return any;
+  }
+  // Share of the arena's area covered by characters, 0..1.
+  fill(): number {
+    const a = this.cfg.arena;
+    const area = a.type === 'rect' ? a.width * a.height : a.type === 'polygon' ? 0.5 * Math.max(3, a.sides) * a.radius * a.radius * Math.sin((2 * Math.PI) / Math.max(3, a.sides)) : Math.PI * a.radius * a.radius;
+    let s = 0; for (const b of this.balls.values()) s += Math.PI * b.radius * b.radius;
+    return area > 0 ? Math.min(1, s / area) : 0;
   }
 
   private mergeTarget(catId: string, intensity: number): Category | null {

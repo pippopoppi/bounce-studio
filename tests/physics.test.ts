@@ -170,3 +170,31 @@ describe('templates', () => {
     }
   });
 });
+
+describe('grow on bounce + melody', () => {
+  it('a constant-speed ball grows on wall bounces until it fills the arena', () => {
+    const cfg = defaultConfig();
+    cfg.physics.gravityEnabled = false;
+    cfg.arena = { ...cfg.arena, type: 'circle', radius: 300 };
+    cfg.obstacles = [];
+    cfg.categories = [{ ...cfg.categories[0], count: 1, radius: 20, growPerBounce: 10, keepSpeed: 900, restitution: 1, friction: 0,
+      spawn: { mode: 'manual', positions: [{ x: 0, y: 0 }], velocityMode: 'fixed', speed: 900, angle: 70, speedJitter: 0 } }];
+    const w = new PhysicsWorld(cfg), dt = 1 / cfg.physics.timeStep;
+    let t = 0;
+    while (!w.grown() && t < 60) { w.step(dt); t += dt; }
+    const b = [...w.balls.values()][0];
+    expect(w.grown()).toBe(true);
+    expect(b.radius).toBeCloseTo(300 * 0.97, 5);
+    expect(Math.hypot(b.body.velocity.x, b.body.velocity.y) * 60).toBeCloseTo(900, 0);
+    expect(w.fill()).toBeGreaterThan(0.9);
+  });
+  it('parses notes, sharps/flats and chords', async () => {
+    const { parseMelody } = await import('../src/audio/melodies');
+    const n = parseMelody('A4 C#5, Bb3 | C4+E4+G4 nope');
+    expect(n.length).toBe(4);
+    expect(n[0][0]).toBeCloseTo(440, 3);
+    expect(n[1][0]).toBeCloseTo(554.365, 2);
+    expect(n[2][0]).toBeCloseTo(233.082, 2);
+    expect(n[3].length).toBe(3);
+  });
+});

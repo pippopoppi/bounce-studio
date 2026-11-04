@@ -3,6 +3,7 @@
 // sounds and frames stay locked together.
 import type { Config, SimEvent } from '../types';
 import { pairKey } from '../types';
+import { parseMelody } from '../audio/melodies';
 import { PhysicsWorld } from '../physics/world';
 import { AudioEngine } from '../audio/engine';
 import { Renderer, Effects } from '../render/renderer';
@@ -22,6 +23,8 @@ export class Simulation {
   private anchorClock = 0;   // clock value when play started
   private anchorSim = 0;     // simulation time when play started
   private nextImpulse = 0;
+  private noteIndex = 0;
+  private melodyCache: { text: string; notes: number[][] } = { text: '', notes: [] };
   private finishResolvers: (() => void)[] = [];
   onStatus: (s: SimStatus) => void = () => {};
 
@@ -43,7 +46,7 @@ export class Simulation {
     this.cfg = cfg;
     this.world = new PhysicsWorld(cfg);
     this.fx.reset();
-    this.state = 'idle'; this.winner = null;
+    this.state = 'idle'; this.winner = null; this.noteIndex = 0;
     this.nextImpulse = cfg.physics.periodicImpulse.every;
     this.renderer.setAssets(cfg.assets);
     this.audio.applyConfig(cfg.audio, cfg.assets);
@@ -139,6 +142,12 @@ export class Simulation {
       else if (e.type === 'escape') this.audio.play('escape', a.escape, when, 1500, simT);
       else if (e.type === 'eliminate') this.audio.play('eliminate', a.eliminate, when, 1500, simT);
       else if (e.type === 'merge') this.audio.play('merge:' + e.from, a.merges[e.from], when, 1500, simT);
+      const m = a.melody;
+      if (m && m.enabled && (e.type === 'wall' || (m.on === 'all' && (e.type === 'pair' || e.type === 'obstacle'))) && e.intensity >= (m.minImpact ?? 0)) {
+        if (this.melodyCache.text !== m.notes) this.melodyCache = { text: m.notes, notes: parseMelody(m.notes) };
+        const notes = this.melodyCache.notes;
+        if (notes.length) { this.audio.playNote(notes[this.noteIndex % notes.length], when); this.noteIndex += 1; }
+      }
     }
     this.fx.onEvents(events, this.cfg, (cat) => this.cfg.categories.find((k) => k.id === cat)?.color ?? '#fff');
   }
@@ -150,6 +159,7 @@ export class Simulation {
     let done = this.world.time >= this.cfg.duration - 1e-9;
     if (this.cfg.autoStop === 'lastCharacter' && alive <= 1) done = true;
     if (this.cfg.autoStop === 'lastCategory' && aliveCats.length <= 1) done = true;
+    if (this.cfg.autoStop === 'grown' && this.world.grown()) done = true;
     if (!done) return false;
     this.winner = aliveCats.length === 1 ? aliveCats[0] : null;
     if (aliveCats.length > 1 && this.cfg.autoStop !== 'never') { // most survivors wins

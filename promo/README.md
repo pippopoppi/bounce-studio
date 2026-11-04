@@ -53,3 +53,11 @@ in alto il contatore «N left», l'ultima bandiera dentro vince. Pensato per i v
 gancio, poi il ritmo rallenta fino a un duello finale di circa 9 s. Con il seed 29 vince il Brasile contro la Turchia dopo circa 27 s
 (Chrome/Edge; anche Firefox, a 29,7 s). Per un altro vincitore basta cambiare il seed (🎲 New seed). Bandiere nazionali da Wikimedia
 Commons (pubblico dominio).
+
+## Ogni rimbalzo cresce (In the Hall of the Mountain King)
+
+`grow-every-bounce.json`: una sola pallina in un anello arcobaleno, a velocità costante. A ogni rimbalzo sul bordo cresce di 4,4 px
+e suona la nota successiva di *Nell'antro del re della montagna* di Grieg (pubblico dominio, sintetizzata nel browser). Più cresce,
+più i rimbalzi si fanno vicini, quindi la musica accelera da sola, proprio come il brano, fino a riempire il cerchio dopo circa 27 s
+(107 note su 109). In alto «N% full», alla fine «It filled the circle!». A velocità costante il risultato è identico in Chrome e
+Firefox. Altre melodie integrate: Inno alla gioia, Per Elisa, Twinkle Twinkle; oppure scrivi le tue note (Characters → Melody).

@@ -35,6 +35,9 @@ export interface Category {
   minImpact: number;           // px/s: weaker hits do not count
   mergeInto: string | null;    // evolution: two of this type that touch fuse into one of that category
   mergeMinImpact: number;      // px/s: softer touches do not merge (0 = any contact)
+  growPerBounce: number;       // px added to the radius on every wall bounce (0 = off)
+  growMax: number;             // largest radius it can grow to (0 = as big as the arena allows)
+  keepSpeed: number;           // px/s: speed held constant every step, direction free (0 = off, physics decides)
 }
 
 export type ArenaType = 'circle' | 'rect' | 'polygon' | 'circleGap';
@@ -115,6 +118,18 @@ export interface AudioConfig {
   escape: SoundSlot;
   eliminate: SoundSlot;
   victory: SoundSlot;
+  melody: MelodyConfig;
+}
+
+// Melody mode: every bounce plays the next note of `notes` on a synthesized instrument (wraps around at the end).
+export interface MelodyConfig {
+  enabled: boolean;
+  notes: string;               // "B3 C#4 D4"; chords with + ("C4+E4+G4")
+  instrument: 'piano' | 'bell' | 'pluck' | 'chip';
+  volume: number;
+  transpose: number;           // semitones
+  on: 'wall' | 'all';          // wall bounces only, or every hit (walls, obstacles, other characters)
+  minImpact: number;           // px/s: softer touches play nothing
 }
 
 export interface RenderConfig {
@@ -129,8 +144,9 @@ export interface RenderConfig {
   squash: { enabled: boolean; amount: number };
   labels: boolean;
   counter: boolean;
-  counterStyle: 'perType' | 'total'; // one number per type, or a single "N left"
-  outBanner: boolean;          // "<name> is out!" banner when a character escapes or is eliminated
+  counterStyle: 'perType' | 'total' | 'fill'; // one number per type, or a single "N left"
+  outBanner: boolean;
+  endText: string;             // text shown when the run ends ('' = "<name> wins!" / "Finished")          // "<name> is out!" banner when a character escapes or is eliminated
   title: string;
   hudPosition: 'top' | 'bottom';
   mergePop: boolean;           // merged character grows in (true) or simply replaces the pair (false) // counter and title at the top or below the arena (e.g. when a pipe is at the top)
@@ -145,7 +161,7 @@ export interface Config {
   seed: number;
   duration: number;            // seconds
   speed: number;               // playback speed multiplier
-  autoStop: 'never' | 'lastCharacter' | 'lastCategory';
+  autoStop: 'never' | 'lastCharacter' | 'lastCategory' | 'grown';
   canvas: CanvasConfig;
   physics: PhysicsConfig;
   arena: ArenaConfig;

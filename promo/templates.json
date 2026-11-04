@@ -1,5 +1,10 @@
 [
   {
+    "file": "grow-every-bounce.json",
+    "name": "Every bounce it grows (Mountain King)",
+    "description": "One ball; every wall bounce makes it bigger and plays the next note of “In the Hall of the Mountain King”. Bounces speed up as it grows, so the tune accelerates until the ball fills the circle (~27 s)."
+  },
+  {
     "file": "countries-escape.json",
     "name": "Which country survives? (flag battle)",
     "description": "16 flags in a spinning rainbow ring with a gap. Fall out and you are eliminated; last one inside wins. Seed 29: Brazil wins after a 9 s duel with Turkey (Chrome/Edge)."
