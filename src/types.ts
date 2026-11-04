@@ -107,7 +107,7 @@ export interface SoundSlot {
 export interface AudioConfig {
   masterVolume: number;
   maxVoices: number;
-  music: { assetId: string | null; volume: number; loop: boolean };
+  music: { assetId: string | null; volume: number; loop: boolean; clip: { start: number; end: number } | null }; // clip: part of the track to play / loop
   pairs: Record<string, SoundSlot>;   // key = pairKey(idA, idB)
   merges: Record<string, SoundSlot>;  // key = source category id (categories with mergeInto)
   wall: SoundSlot;

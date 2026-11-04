@@ -63,6 +63,7 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset, audio 
           onUpload={async (f) => { const a = await upload(f, 'audio'); set(['audio', 'music', 'assetId'], a.id); }} />
         <Range label="Music volume" value={cfg.audio.music.volume} onChange={(v) => set(['audio', 'music', 'volume'], v)} min={0} max={1} />
         <Check label="Loop" checked={cfg.audio.music.loop} onChange={(v) => set(['audio', 'music', 'loop'], v)} />
+        <ClipEditor slot={{ assetId: cfg.audio.music.assetId, volume: cfg.audio.music.volume, pitch: 0, cooldown: 0, intensityScaling: false, clip: cfg.audio.music.clip ?? null }} audio={audio} onChange={(c) => set(['audio', 'music', 'clip'], c)} />
         <Row>
           <Range label="Master volume" value={cfg.audio.masterVolume} onChange={(v) => set(['audio', 'masterVolume'], v)} min={0} max={1} />
           <Num label="Max simultaneous sounds" value={cfg.audio.maxVoices} onChange={(v) => set(['audio', 'maxVoices'], Math.max(1, Math.round(v)))} min={1} max={64} />

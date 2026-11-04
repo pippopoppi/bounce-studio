@@ -39,6 +39,9 @@ describe('sound clip', () => {
     const c = normalizeConfig({ version: 1, categories: [{ id: 'a', name: 'A' }], audio: { pairs: { 'a|a': { assetId: 'builtin:chime', clip: { start: 0.5, end: 2 } } } } } as unknown);
     expect(c.audio.pairs['a|a'].clip).toEqual({ start: 0.5, end: 2 });
     expect(c.audio.wall.clip).toBeNull();
+    expect(c.audio.music.clip).toBeNull();
+    const m = normalizeConfig({ version: 1, categories: [], audio: { music: { clip: { start: 10, end: 40 } } } } as unknown);
+    expect(m.audio.music.clip).toEqual({ start: 10, end: 40 });
   });
 });
 

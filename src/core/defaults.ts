@@ -88,7 +88,7 @@ export function defaultConfig(): Config {
     categories,
     audio: {
       masterVolume: 0.9, maxVoices: 12,
-      music: { assetId: BUILTIN_MUSIC, volume: 0.5, loop: true },
+      music: { assetId: BUILTIN_MUSIC, volume: 0.5, loop: true, clip: null },
       pairs,
       merges: {},
       wall: soundSlot('builtin:knock', 0.5),

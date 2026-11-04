@@ -94,12 +94,15 @@ export class AudioEngine {
     if (!this.ctx || !this.musicGain || !id) return;
     const buf = this.buffers.get(id);
     if (!buf) { void this.buffer(id).then(() => { if (this.music === null) this.startMusic(simTime, rate); }); return; }
+    const m = this.cfg.music, r = clipRange(m, buf);
     const src = this.ctx.createBufferSource();
-    src.buffer = buf; src.loop = this.cfg.music.loop; src.playbackRate.value = rate;
+    src.buffer = buf; src.loop = m.loop; src.playbackRate.value = rate;
+    if (m.loop) { src.loopStart = r.offset; src.loopEnd = r.offset + r.duration; }
     src.connect(this.musicGain);
-    const offset = this.cfg.music.loop ? simTime % buf.duration : simTime;
-    if (!this.cfg.music.loop && offset >= buf.duration) return;
-    src.start(this.ctx.currentTime, offset);
+    const pos = m.loop ? simTime % r.duration : simTime; // position inside the clip
+    if (!m.loop && pos >= r.duration) return;
+    if (m.loop) src.start(this.ctx.currentTime, r.offset + pos);
+    else src.start(this.ctx.currentTime, r.offset + pos, r.duration - pos);
     this.music = src;
   }
   stopMusic(): void { if (this.music) { try { this.music.stop(); } catch { /* already stopped */ } this.music.disconnect(); this.music = null; } }
@@ -159,7 +162,7 @@ export class AudioEngine {
 }
 
 // Offset/duration (seconds of the buffer) for a slot's clip range; whole buffer when unset or degenerate.
-export function clipRange(slot: SoundSlot, buf: AudioBuffer): { offset: number; duration: number } {
+export function clipRange(slot: { clip?: SoundSlot['clip'] }, buf: AudioBuffer): { offset: number; duration: number } {
   const c = slot.clip;
   if (!c) return { offset: 0, duration: buf.duration };
   const start = Math.min(Math.max(0, c.start), buf.duration);
