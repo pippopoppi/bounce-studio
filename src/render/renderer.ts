@@ -97,7 +97,7 @@ export class Renderer {
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.fillStyle = r.background; c.fillRect(0, 0, W, H);
     this.drawArena(world, cfg);
-    this.drawObstacles(world);
+    this.drawObstacles(world, cfg);
     this.drawTrails(world, cfg, fx);
     this.drawParticles(fx);
     this.drawBalls(world, cfg, fx);
@@ -123,7 +123,7 @@ export class Renderer {
       c.save(); c.translate(CENTER.x, CENTER.y); c.rotate(Math.atan2(g.d.y, g.d.x));
       c.fillRect(g.vMin - 2, -g.halfWidth, g.vEnd - g.vMin + 2, g.halfWidth * 2);
       c.restore();
-      c.fillStyle = a.color;
+      c.fillStyle = this.wallStyle(cfg, world); // the chute is part of the wall
       for (const part of world.pipeParts()) this.fillBody(part);
     }
     c.fillStyle = this.wallStyle(cfg, world);
@@ -147,8 +147,9 @@ export class Renderer {
     c.closePath(); c.fill();
   }
 
-  private drawObstacles(world: PhysicsWorld): void {
-    for (const o of world.obstacleBodies()) { this.ctx.fillStyle = o.cfg.color; this.fillBody(o.body); }
+  private drawObstacles(world: PhysicsWorld, cfg: Config): void {
+    const wall = cfg.render.obstaclesMatchWall ? this.wallStyle(cfg, world) : null;
+    for (const o of world.obstacleBodies()) { this.ctx.fillStyle = wall ?? o.cfg.color; this.fillBody(o.body); }
   }
 
   private drawTrails(world: PhysicsWorld, cfg: Config, fx: Effects): void {

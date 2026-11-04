@@ -98,7 +98,7 @@ export function defaultConfig(): Config {
       victory: soundSlot('builtin:fanfare', 0.9)
     },
     render: {
-      background: '#101418', arenaFill: '#1a2129', wallStyle: 'solid', outlineWidth: 6, outlineColor: '',
+      background: '#101418', arenaFill: '#1a2129', wallStyle: 'solid', obstaclesMatchWall: false, outlineWidth: 6, outlineColor: '',
       trails: { enabled: true, length: 14, width: 0.5 },
       particles: { enabled: true, amount: 6 },
       squash: { enabled: true, amount: 0.18 },

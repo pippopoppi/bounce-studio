@@ -106,6 +106,7 @@ export function SettingsPanel({ cfg, set, patch, replace }: { cfg: Config; set: 
           <Color label="Wall colour" value={a.color} onChange={(v) => set(['arena', 'color'], v)} />
           <Sel label="Wall style" value={r.wallStyle} onChange={(v) => set(['render', 'wallStyle'], v)} options={[{ value: 'solid', label: 'Solid colour' }, { value: 'rainbow', label: 'Rainbow ring' }]} />
         </Row>
+        <Check label="Obstacles painted like the wall (same colour / rainbow)" checked={r.obstaclesMatchWall} onChange={(v) => set(['render', 'obstaclesMatchWall'], v)} />
         <Check label="Pipe: characters enter through a chute" checked={a.pipe.enabled} onChange={(v) => set(['arena', 'pipe', 'enabled'], v)} />
         {a.pipe.enabled ? <>
           <Row>

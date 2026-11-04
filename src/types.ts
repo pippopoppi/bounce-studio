@@ -120,6 +120,7 @@ export interface RenderConfig {
   background: string;
   arenaFill: string;
   wallStyle: 'solid' | 'rainbow';
+  obstaclesMatchWall: boolean;  // obstacles painted like the wall (solid colour / rainbow) instead of their own colour
   outlineWidth: number;
   outlineColor: string;        // '' = use the category colour
   trails: { enabled: boolean; length: number; width: number };
