@@ -101,6 +101,7 @@ export interface SoundSlot {
   pitch: number;               // semitones
   cooldown: number;            // ms between two plays of this slot
   intensityScaling: boolean;
+  clip: { start: number; end: number } | null; // seconds into the file to play; null = whole file
 }
 
 export interface AudioConfig {

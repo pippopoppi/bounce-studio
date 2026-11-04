@@ -8,7 +8,7 @@ export const BUILTIN_SOUNDS = [
 export const BUILTIN_MUSIC = 'builtin:demo-music';
 
 export function soundSlot(assetId: string | null = null, volume = 0.8): SoundSlot {
-  return { assetId, volume, pitch: 0, cooldown: 40, intensityScaling: true };
+  return { assetId, volume, pitch: 0, cooldown: 40, intensityScaling: true, clip: null };
 }
 
 export function defaultSpawn(): SpawnConfig {

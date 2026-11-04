@@ -99,3 +99,6 @@ select, .field input[type="number"], .field input[type="text"], .field select { 
 .preset-list li { display: flex; align-items: center; gap: 10px; }
 .preset-list li .btn { flex: 0 0 auto; min-width: 120px; }
 .preset-list li span { font-size: 12px; color: var(--muted, #9aa4b2); }
+.clip { margin-top: 8px; }
+.clip .btn { white-space: nowrap; }
+.clip canvas { display: block; border-radius: 8px; border: 1px solid var(--line); cursor: ew-resize; touch-action: none; margin: 4px 0 6px; }

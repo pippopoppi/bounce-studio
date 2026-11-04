@@ -123,7 +123,30 @@ export class AudioEngine {
     src.connect(g).connect(this.master);
     this.voices += 1;
     src.onended = () => { this.voices -= 1; src.disconnect(); g.disconnect(); };
-    src.start(Math.max(when, this.ctx.currentTime));
+    const r = clipRange(slot, buf);
+    src.start(Math.max(when, this.ctx.currentTime), r.offset, r.duration);
+  }
+
+  // Decoded buffer for the clip editor (waveform); resumes the context if needed.
+  async getBuffer(id: string): Promise<AudioBuffer | null> {
+    await this.ensure();
+    return this.buffer(id);
+  }
+
+  // Play a slot right now (clip editor preview): ignores cooldown and the voice limit. Returns a stop function.
+  async preview(slot: SoundSlot): Promise<() => void> {
+    if (!slot.assetId) return () => {};
+    const ctx = await this.ensure();
+    const buf = await this.buffer(slot.assetId);
+    if (!buf || !this.master) return () => {};
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.playbackRate.value = Math.pow(2, slot.pitch / 12);
+    const g = ctx.createGain(); g.gain.value = slot.volume;
+    src.connect(g).connect(this.master);
+    src.onended = () => { src.disconnect(); g.disconnect(); };
+    const r = clipRange(slot, buf);
+    src.start(ctx.currentTime, r.offset, r.duration);
+    return () => { try { src.stop(); } catch { /* already stopped */ } };
   }
 
   resetCooldowns(): void { this.lastPlay.clear(); }
@@ -133,4 +156,14 @@ export class AudioEngine {
     const b = await this.buffer(id);
     return b ? b.duration : 0;
   }
+}
+
+// Offset/duration (seconds of the buffer) for a slot's clip range; whole buffer when unset or degenerate.
+export function clipRange(slot: SoundSlot, buf: AudioBuffer): { offset: number; duration: number } {
+  const c = slot.clip;
+  if (!c) return { offset: 0, duration: buf.duration };
+  const start = Math.min(Math.max(0, c.start), buf.duration);
+  const end = Math.min(Math.max(start, c.end), buf.duration);
+  if (end - start < 0.01) return { offset: 0, duration: buf.duration };
+  return { offset: start, duration: end - start };
 }

@@ -57,7 +57,7 @@ export function App() {
       <div className="layout" data-tab={tab}>
         <aside className="panel left"><SettingsPanel cfg={cfg} set={set} patch={patch} replace={replace} /></aside>
         <Preview cfg={cfg} sim={sim} status={status} audio={audio} canvasRef={canvasRef} set={set} />
-        <aside className="panel right"><CharactersPanel cfg={cfg} set={set} patch={patch} addAsset={addAsset} removeAsset={removeAsset} /></aside>
+        <aside className="panel right"><CharactersPanel cfg={cfg} set={set} patch={patch} addAsset={addAsset} removeAsset={removeAsset} audio={audio} /></aside>
       </div>
     </div>
   );

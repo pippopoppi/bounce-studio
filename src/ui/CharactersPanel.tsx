@@ -5,14 +5,16 @@ import { BUILTIN_MUSIC, BUILTIN_SOUNDS, newCategory } from '../core/defaults';
 import { BUILTIN_LABELS } from '../audio/builtins';
 import { uid } from '../core/id';
 import { Check, Color, FileBtn, Num, Range, Row, Sel, Section, SummaryDelete, Text, readFileAsDataUrl } from './fields';
+import { ClipEditor } from './ClipEditor';
+import type { AudioEngine } from '../audio/engine';
 
 type Set = (path: (string | number)[], value: unknown) => void;
 type Patch = (fn: (d: Config) => void) => void;
-interface Props { cfg: Config; set: Set; patch: Patch; addAsset: (a: Asset) => void; removeAsset: (id: string) => void }
+interface Props { cfg: Config; set: Set; patch: Patch; addAsset: (a: Asset) => void; removeAsset: (id: string) => void; audio: AudioEngine }
 
 const PALETTE = ['#ff4d4d', '#4da6ff', '#ffd93d', '#6bcB77', '#c77dff', '#ff9f43', '#48dbfb', '#f368e0'];
 
-export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Props) {
+export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset, audio }: Props) {
   const images = cfg.assets.filter((a) => a.kind === 'image');
   const sounds = cfg.assets.filter((a) => a.kind === 'audio');
   const upload = async (file: File, kind: Asset['kind']): Promise<Asset> => {
@@ -49,7 +51,7 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Prop
             ]} />
             {k.mergeInto && cfg.audio.merges[k.id] ? <>
               <Num label="Min. impact to merge (0 = any touch)" unit="px/s" value={k.mergeMinImpact} onChange={(v) => set(['categories', i, 'mergeMinImpact'], Math.max(0, v))} min={0} step={50} />
-              <SlotEditor title={`Sound: ${k.name} → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? '?'}`} slot={cfg.audio.merges[k.id]} sounds={sounds} onChange={(path, v) => set(['audio', 'merges', k.id, ...path], v)} upload={(f) => upload(f, 'audio')} />
+              <SlotEditor audio={audio} title={`Sound: ${k.name} → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? '?'}`} slot={cfg.audio.merges[k.id]} sounds={sounds} onChange={(path, v) => set(['audio', 'merges', k.id, ...path], v)} upload={(f) => upload(f, 'audio')} />
             </> : null}
           </div>
         ))}
@@ -71,11 +73,11 @@ export function CharactersPanel({ cfg, set, patch, addAsset, removeAsset }: Prop
       <h2>Collision sounds</h2>
       <Section title="Character vs character" open>
         <p className="hint">One sound per pair. The table grows with your character types.</p>
-        <Matrix cfg={cfg} set={set} sounds={sounds} upload={(f) => upload(f, 'audio')} />
+        <Matrix cfg={cfg} set={set} sounds={sounds} upload={(f) => upload(f, 'audio')} audio={audio} />
       </Section>
       <Section title="Events">
         {([['wall', 'Character hits a wall'], ['obstacle', 'Character hits an obstacle'], ['escape', 'Character escapes the arena'], ['eliminate', 'Character eliminated'], ['victory', 'Victory / simulation over']] as const).map(([key, label]) => (
-          <SlotEditor key={key} title={label} slot={cfg.audio[key]} sounds={sounds} onChange={(path, v) => set(['audio', key, ...path], v)} upload={(f) => upload(f, 'audio')} />
+          <SlotEditor key={key} audio={audio} title={label} slot={cfg.audio[key]} sounds={sounds} onChange={(path, v) => set(['audio', key, ...path], v)} upload={(f) => upload(f, 'audio')} />
         ))}
       </Section>
 
@@ -186,16 +188,16 @@ function SoundPicker({ label, value, sounds, music, onChange, onUpload }: { labe
   );
 }
 
-function SlotEditor({ title, slot, sounds, onChange, upload }: { title: string; slot: SoundSlot; sounds: Asset[]; onChange: (path: string[], v: unknown) => void; upload: (f: File) => Promise<Asset> }) {
+function SlotEditor({ title, slot, sounds, onChange, upload, audio }: { title: string; slot: SoundSlot; sounds: Asset[]; onChange: (path: string[], v: unknown) => void; upload: (f: File) => Promise<Asset>; audio: AudioEngine }) {
   return (
     <div className="slot">
       <SoundPicker label={title} value={slot.assetId} sounds={sounds} onChange={(v) => onChange(['assetId'], v)} onUpload={async (f) => { const a = await upload(f); onChange(['assetId'], a.id); }} />
-      <SlotFields slot={slot} onChange={onChange} />
+      <SlotFields slot={slot} onChange={onChange} audio={audio} />
     </div>
   );
 }
 
-function SlotFields({ slot, onChange }: { slot: SoundSlot; onChange: (path: string[], v: unknown) => void }) {
+function SlotFields({ slot, onChange, audio }: { slot: SoundSlot; onChange: (path: string[], v: unknown) => void; audio: AudioEngine }) {
   return (
     <>
       <div className="row-3">
@@ -204,11 +206,12 @@ function SlotFields({ slot, onChange }: { slot: SoundSlot; onChange: (path: stri
         <Num label="Cooldown" unit="ms" value={slot.cooldown} onChange={(v) => onChange(['cooldown'], Math.max(0, v))} min={0} step={10} />
       </div>
       <Check label="Louder on harder impacts" checked={slot.intensityScaling} onChange={(v) => onChange(['intensityScaling'], v)} />
+      <ClipEditor slot={slot} audio={audio} onChange={(c) => onChange(['clip'], c)} />
     </>
   );
 }
 
-function Matrix({ cfg, set, sounds, upload }: { cfg: Config; set: Set; sounds: Asset[]; upload: (f: File) => Promise<Asset> }) {
+function Matrix({ cfg, set, sounds, upload, audio }: { cfg: Config; set: Set; sounds: Asset[]; upload: (f: File) => Promise<Asset>; audio: AudioEngine }) {
   const cats = cfg.categories;
   const [sel, setSel] = React.useState<string | null>(null);
   const key = sel && cfg.audio.pairs[sel] ? sel : null;
@@ -237,7 +240,7 @@ function Matrix({ cfg, set, sounds, upload }: { cfg: Config; set: Set; sounds: A
       {key ? <div className="slot">
         <div className="slot-head"><span>{cats.find((c) => c.id === key.split('|')[0])?.name} vs {cats.find((c) => c.id === key.split('|')[1])?.name}</span>
           <FileBtn label="Upload sound for this pair" className="btn-sm" accept="audio/*,.mp3,.wav,.ogg" onFile={async (f) => { const a = await upload(f); set(['audio', 'pairs', key, 'assetId'], a.id); }} /></div>
-        <SlotFields slot={cfg.audio.pairs[key]} onChange={(path, v) => set(['audio', 'pairs', key, ...path], v)} />
+        <SlotFields slot={cfg.audio.pairs[key]} onChange={(path, v) => set(['audio', 'pairs', key, ...path], v)} audio={audio} />
       </div> : <p className="hint">Pick a cell to upload a sound for that pair or tune volume, pitch and cooldown.</p>}
     </div>
   );

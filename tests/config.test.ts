@@ -34,6 +34,14 @@ describe('canvas size', () => {
   });
 });
 
+describe('sound clip', () => {
+  it('slots default to the whole file and keep a saved range', () => {
+    const c = normalizeConfig({ version: 1, categories: [{ id: 'a', name: 'A' }], audio: { pairs: { 'a|a': { assetId: 'builtin:chime', clip: { start: 0.5, end: 2 } } } } } as unknown);
+    expect(c.audio.pairs['a|a'].clip).toEqual({ start: 0.5, end: 2 });
+    expect(c.audio.wall.clip).toBeNull();
+  });
+});
+
 describe('rng', () => {
   it('is reproducible', () => {
     const a = new Rng(42), b = new Rng(42);
