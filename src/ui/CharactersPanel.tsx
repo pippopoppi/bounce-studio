@@ -4,7 +4,7 @@ import { pairKey } from '../types';
 import { BUILTIN_MUSIC, BUILTIN_SOUNDS, newCategory } from '../core/defaults';
 import { BUILTIN_LABELS } from '../audio/builtins';
 import { uid } from '../core/id';
-import { Check, Color, FileBtn, Num, Range, Row, Sel, Section, Text, readFileAsDataUrl } from './fields';
+import { Check, Color, FileBtn, Num, Range, Row, Sel, Section, SummaryDelete, Text, readFileAsDataUrl } from './fields';
 
 type Set = (path: (string | number)[], value: unknown) => void;
 type Patch = (fn: (d: Config) => void) => void;
@@ -95,7 +95,7 @@ function CategoryEditor({ k, i, set, images, cfg, onUpload, remove }: { k: Categ
   const s = k.spawn;
   return (
     <details className="section">
-      <summary><span className="cat-swatch" style={{ background: k.color }} />{k.name || 'Unnamed'}<span className="badge">×{k.count}{k.mergeInto ? ` → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? ''}` : ''}</span></summary>
+      <summary><span className="cat-swatch" style={{ background: k.color }} />{k.name || 'Unnamed'}<span className="badge">×{k.count}{k.mergeInto ? ` → ${cfg.categories.find((o) => o.id === k.mergeInto)?.name ?? ''}` : ''}</span><SummaryDelete onClick={remove} title={`Remove ${k.name || 'this type'}`} disabled={cfg.categories.length <= 1} /></summary>
       <div className="section-body">
         <Row>
           <Text label="Name" value={k.name} onChange={(v) => set([...b, 'name'], v)} />

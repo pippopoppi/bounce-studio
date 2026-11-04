@@ -93,3 +93,11 @@ export function FileBtn({ label, accept, onFile, className }: { label: string; a
 export function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsDataURL(file); });
 }
+
+// Small ✕ for a <summary>: removes the item without opening the section (and without toggling it).
+export function SummaryDelete({ onClick, title, disabled }: { onClick: () => void; title: string; disabled?: boolean }) {
+  return (
+    <button type="button" className="summary-x" title={title} aria-label={title} disabled={disabled}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}>✕</button>
+  );
+}

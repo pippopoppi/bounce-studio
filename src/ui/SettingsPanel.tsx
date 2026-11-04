@@ -4,7 +4,7 @@ import { ARENA_PRESETS, newObstacle } from '../core/defaults';
 import { parseConfig, serializeConfig } from '../core/configio';
 import { randomSeed } from '../core/rng';
 import { uid } from '../core/id';
-import { Check, Color, Num, Row, Sel, Section, Text, FileBtn } from './fields';
+import { Check, Color, Num, Row, Sel, Section, SummaryDelete, Text, FileBtn } from './fields';
 
 type Set = (path: (string | number)[], value: unknown) => void;
 type Patch = (fn: (d: Config) => void) => void;
@@ -173,7 +173,7 @@ function ObstacleEditor({ o, i, set, remove }: { o: Obstacle; i: number; set: Se
   const kindLabel = o.kind === 'circle' ? 'Circle' : o.kind === 'rect' ? 'Platform' : 'Bar';
   return (
     <details className="section" ref={ref}>
-      <summary>{kindLabel} #{i + 1}<span className="badge">{o.motion.type !== 'none' ? o.motion.type : ''} {o.angularVelocity ? `${o.angularVelocity}°/s` : ''}</span></summary>
+      <summary>{kindLabel} #{i + 1}<span className="badge">{o.motion.type !== 'none' ? o.motion.type : ''} {o.angularVelocity ? `${o.angularVelocity}°/s` : ''}</span><SummaryDelete onClick={remove} title={`Remove ${kindLabel.toLowerCase()} #${i + 1}`} /></summary>
       <div className="section-body">
         <Row>
           <Num label="X" unit="px" value={o.x} onChange={(v) => set([...base, 'x'], v)} step={10} />
