@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../src/core/defaults';
-import { ensurePairs, parseConfig, serializeConfig } from '../src/core/configio';
+import { ensurePairs, normalizeConfig, parseConfig, serializeConfig } from '../src/core/configio';
 import { Rng } from '../src/core/rng';
 import { pairKey } from '../src/types';
 
@@ -22,6 +22,15 @@ describe('config', () => {
     ensurePairs(c);
     expect(Object.keys(c.audio.pairs).length).toBe(10); // 4 types → 4*5/2 pairs
     expect(c.audio.pairs[pairKey('cat_red', 'cat_blue')].assetId).toBe('builtin:blip-mid');
+  });
+});
+
+describe('canvas size', () => {
+  it('defaults to 1080×1920 for configs saved before the setting existed', () => {
+    const c = normalizeConfig({ version: 1, name: 'old', categories: [] } as unknown);
+    expect(c.canvas).toEqual({ width: 1080, height: 1920 });
+    const d = normalizeConfig({ version: 1, canvas: { width: 1920, height: 1080 }, categories: [] } as unknown);
+    expect(d.canvas).toEqual({ width: 1920, height: 1080 });
   });
 });
 

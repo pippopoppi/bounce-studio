@@ -1,5 +1,5 @@
 import type { ArenaConfig, Category, Config, Obstacle, PipeConfig, SoundSlot, SpawnConfig } from '../types';
-import { pairKey } from '../types';
+import { CANVAS_H, CANVAS_W, pairKey } from '../types';
 
 export const BUILTIN_SOUNDS = [
   'builtin:blip-low', 'builtin:blip-mid', 'builtin:blip-high', 'builtin:pop', 'builtin:knock',
@@ -76,6 +76,7 @@ export function defaultConfig(): Config {
     duration: 30,
     speed: 1,
     autoStop: 'never',
+    canvas: { width: CANVAS_W, height: CANVAS_H },
     physics: {
       gravityEnabled: true, gravityX: 0, gravityY: 1, timeStep: 120, substeps: 2, airDamping: 0,
       velocityIterations: 6, positionIterations: 8, maxSpeed: 4000,

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Config } from '../types';
+import { CANVAS_SIZES } from '../types';
 import type { Simulation, SimStatus } from '../sim/simulation';
 import { canExport, downloadBlob, exportVideo, supportedMime } from '../export/recorder';
 import { AudioEngine } from '../audio/engine';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
+  const sizeKey = CANVAS_SIZES.some((o) => o.width === cfg.canvas.width && o.height === cfg.canvas.height) ? `${cfg.canvas.width}x${cfg.canvas.height}` : 'custom';
   const [muted, setMuted] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -34,7 +36,7 @@ export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
   const playing = status.state === 'playing';
   return (
     <div className="center">
-      <div className="stage"><canvas ref={canvasRef} aria-label="Simulation preview" /></div>
+      <div className="stage"><canvas ref={canvasRef} aria-label="Simulation preview" style={{ aspectRatio: `${cfg.canvas.width} / ${cfg.canvas.height}` }} /></div>
       <div className="transport">
         <button className="btn btn-primary" onClick={() => (playing ? sim?.pause() : sim?.play())} disabled={!sim || exporting}>{playing ? '⏸ Pause' : status.state === 'finished' ? '↻ Replay' : '▶ Play'}</button>
         <button className="btn" onClick={() => sim?.reset()} disabled={!sim || exporting}>⏮ Reset</button>
@@ -47,6 +49,13 @@ export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
       </div>
       <div style={{ padding: '0 10px 10px', background: 'var(--panel)' }}>
         <Section title="Export video" open>
+          <div className="row-3">
+            <Sel label="Video size" value={sizeKey} onChange={(v) => { const s = CANVAS_SIZES.find((o) => `${o.width}x${o.height}` === v); if (s) set(['canvas'], { width: s.width, height: s.height }); }}
+              options={[...CANVAS_SIZES.map((o) => ({ value: `${o.width}x${o.height}`, label: o.label })), ...(sizeKey === 'custom' ? [{ value: 'custom', label: `Custom (${cfg.canvas.width}×${cfg.canvas.height})` }] : [])]} />
+            <Num label="Width" unit="px" value={cfg.canvas.width} onChange={(v) => set(['canvas', 'width'], Math.min(4096, Math.max(16, Math.round(v))))} min={16} max={4096} step={10} />
+            <Num label="Height" unit="px" value={cfg.canvas.height} onChange={(v) => set(['canvas', 'height'], Math.min(4096, Math.max(16, Math.round(v))))} min={16} max={4096} step={10} />
+          </div>
+          <p className="hint">The arena keeps its own size in pixels, so after switching the video size check Settings → Arena (e.g. a 470 px circle fits a 1080-wide frame, a 1500 px tall rectangle does not fit landscape).</p>
           <div className="row-3">
             <Sel label="Format" value={cfg.export.format} onChange={(v) => set(['export', 'format'], v)} options={[{ value: 'auto', label: 'Auto (MP4 if possible)' }, { value: 'mp4', label: 'MP4' }, { value: 'webm', label: 'WebM' }]} />
             <Num label="Hold last frame" unit="s" value={cfg.export.endHold} onChange={(v) => set(['export', 'endHold'], Math.min(10, Math.max(0, v)))} min={0} max={10} step={0.5} />
@@ -62,7 +71,7 @@ export function Preview({ cfg, sim, status, audio, canvasRef, set }: Props) {
           {error ? <p className="hint" style={{ color: 'var(--danger)' }}>{error}</p> : null}
           <p className="hint">
             {canExport() ? (fmt?.ext === 'mp4' ? 'This browser records MP4 directly.' : 'This browser records WebM (VP9/Opus). TikTok, Instagram and YouTube accept WebM uploads; for MP4 use Chrome/Edge or convert: ffmpeg -i video.webm -c:v libx264 -pix_fmt yuv420p -c:a aac video.mp4')
-              : 'Video recording is not supported in this browser.'} The export is 1080×1920 with background music and every collision sound, locked to the simulation clock.
+              : 'Video recording is not supported in this browser.'} The export is {cfg.canvas.width}×{cfg.canvas.height} with background music and every collision sound, locked to the simulation clock.
           </p>
         </Section>
       </div>

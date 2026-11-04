@@ -11,7 +11,7 @@ import { Preview } from './ui/Preview';
 
 // Anything in this slice changes the physics outcome → rebuild the world when it changes.
 function worldKey(c: Config): string {
-  return JSON.stringify({ seed: c.seed, physics: c.physics, arena: c.arena, obstacles: c.obstacles,
+  return JSON.stringify({ seed: c.seed, canvas: c.canvas, physics: c.physics, arena: c.arena, obstacles: c.obstacles,
     categories: c.categories.map(({ name: _n, color: _c, imageAssetId: _i, rotate: _r, ...rest }) => rest) });
 }
 
@@ -47,7 +47,7 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <h1><span>●</span> Bounce Studio</h1>
-        <small>physics bouncing-ball video maker · 1080×1920</small>
+        <small>physics bouncing-ball video maker · {cfg.canvas.width}×{cfg.canvas.height}</small>
         <span className="spacer" />
         <nav className="tabs">
           {(['settings', 'preview', 'characters'] as const).map((t) => <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>{t[0].toUpperCase() + t.slice(1)}</button>)}

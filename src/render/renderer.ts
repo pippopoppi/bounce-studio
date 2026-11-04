@@ -1,8 +1,6 @@
 // Canvas 2D renderer. Reads body positions from the physics world; never writes to it.
 import type { Asset, Config, SimEvent } from '../types';
-import { CANVAS_W, CANVAS_H } from '../types';
 import type { PhysicsWorld } from '../physics/world';
-import { CENTER } from '../physics/world';
 
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; size: number }
 interface Squash { nx: number; ny: number; t: number }
@@ -71,9 +69,10 @@ export class Effects {
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private images = new Map<string, HTMLImageElement>();
+  private canvas: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
-    canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+    this.canvas = canvas;
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D not available');
     this.ctx = ctx;
@@ -93,8 +92,10 @@ export class Renderer {
 
   draw(world: PhysicsWorld, cfg: Config, fx: Effects, time: number, status: string, winner: string | null): void {
     const c = this.ctx, r = cfg.render;
+    const W = Math.max(16, Math.round(cfg.canvas.width)), H = Math.max(16, Math.round(cfg.canvas.height));
+    if (this.canvas.width !== W || this.canvas.height !== H) { this.canvas.width = W; this.canvas.height = H; } // resizing clears the bitmap; we repaint everything anyway
     c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = r.background; c.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    c.fillStyle = r.background; c.fillRect(0, 0, W, H);
     this.drawArena(world, cfg);
     this.drawObstacles(world);
     this.drawTrails(world, cfg, fx);
@@ -107,7 +108,7 @@ export class Renderer {
   private colorOf(cfg: Config, cat: string): string { return cfg.categories.find((k) => k.id === cat)?.color ?? '#ffffff'; }
 
   private drawArena(world: PhysicsWorld, cfg: Config): void {
-    const c = this.ctx, a = cfg.arena;
+    const c = this.ctx, a = cfg.arena, CENTER = world.center;
     c.fillStyle = cfg.render.arenaFill;
     c.beginPath();
     if (a.type === 'rect') c.rect(CENTER.x - a.width / 2, CENTER.y - a.height / 2, a.width, a.height);
@@ -133,7 +134,7 @@ export class Renderer {
     const c = this.ctx, a = cfg.arena;
     if (cfg.render.wallStyle !== 'rainbow' || typeof c.createConicGradient !== 'function') return a.color;
     const rot = (world.time * a.rotationSpeed * Math.PI) / 180 + world.time * 0.6;
-    const g = c.createConicGradient(rot, CENTER.x, CENTER.y);
+    const g = c.createConicGradient(rot, world.center.x, world.center.y);
     for (let i = 0; i <= 12; i++) g.addColorStop(i / 12, `hsl(${(i * 30) % 360} 100% 60%)`);
     return g;
   }
@@ -223,20 +224,20 @@ export class Renderer {
   }
 
   private drawHud(world: PhysicsWorld, cfg: Config, time: number, status: string, winner: string | null): void {
-    const c = this.ctx, r = cfg.render;
+    const c = this.ctx, r = cfg.render, W = cfg.canvas.width, H = cfg.canvas.height;
     c.textBaseline = 'middle';
     const bottom = r.hudPosition === 'bottom';
     if (r.title) {
-      const y = bottom ? CANVAS_H - (r.counter ? 290 : 160) : 110;
+      const y = bottom ? H - (r.counter ? 290 : 160) : 110;
       c.font = 'bold 64px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 8; c.strokeStyle = 'rgba(0,0,0,0.5)';
-      c.strokeText(r.title, CANVAS_W / 2, y); c.fillText(r.title, CANVAS_W / 2, y);
+      c.strokeText(r.title, W / 2, y); c.fillText(r.title, W / 2, y);
     }
     if (r.counter) {
       const counts = world.counts();
       const cats = cfg.categories;
-      const w = 1080 / Math.max(1, cats.length);
-      const y = bottom ? CANVAS_H - 160 : r.title ? 200 : 120;
+      const w = W / Math.max(1, cats.length);
+      const y = bottom ? H - 160 : r.title ? 200 : 120;
       cats.forEach((k, i) => {
         const x = w * i + w / 2;
         c.fillStyle = k.color; c.beginPath(); c.arc(x - 60, y, 26, 0, Math.PI * 2); c.fill();
@@ -253,8 +254,8 @@ export class Renderer {
       const text = name ? `${name} wins!` : 'Finished';
       c.font = 'bold 96px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
       c.lineWidth = 12; c.strokeStyle = 'rgba(0,0,0,0.6)';
-      const wy = bottom ? CANVAS_H * 0.5 : CANVAS_H - 220; // bottom HUD: the title sits down there, so announce in the middle
-      c.strokeText(text, CANVAS_W / 2, wy); c.fillText(text, CANVAS_W / 2, wy);
+      const wy = bottom ? H * 0.5 : H - 220; // bottom HUD: the title sits down there, so announce in the middle
+      c.strokeText(text, W / 2, wy); c.fillText(text, W / 2, wy);
     }
     void time;
   }

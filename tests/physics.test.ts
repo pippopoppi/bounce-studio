@@ -141,3 +141,16 @@ describe('physics world', () => {
     expect(Object.values(w.counts()).reduce((a, b) => a + b, 0)).toBe(w.balls.size);
   });
 });
+
+describe('canvas size', () => {
+  it('centres the arena in a landscape frame and keeps the balls inside it', () => {
+    const cfg = defaultConfig();
+    cfg.canvas = { width: 1920, height: 1080 };
+    cfg.arena.type = 'circle'; cfg.arena.radius = 450;
+    const { w } = run(cfg, 5);
+    expect(w.center).toEqual({ x: 960, y: 540 });
+    expect(w.alive()).toBe(12);
+    for (const b of w.balls.values()) expect(Math.hypot(b.body.position.x - 960, b.body.position.y - 540)).toBeLessThan(450);
+  });
+});
+

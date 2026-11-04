@@ -132,6 +132,7 @@ export interface RenderConfig {
   mergePop: boolean;           // merged character grows in (true) or simply replaces the pair (false) // counter and title at the top or below the arena (e.g. when a pipe is at the top)
 }
 
+export interface CanvasConfig { width: number; height: number } // video / preview size in px
 export interface ExportConfig { format: 'auto' | 'webm' | 'mp4'; fps: number; bitrateMbps: number; endHold: number } // endHold: seconds the final frame stays on screen
 
 export interface Config {
@@ -141,6 +142,7 @@ export interface Config {
   duration: number;            // seconds
   speed: number;               // playback speed multiplier
   autoStop: 'never' | 'lastCharacter' | 'lastCategory';
+  canvas: CanvasConfig;
   physics: PhysicsConfig;
   arena: ArenaConfig;
   obstacles: Obstacle[];
@@ -161,7 +163,14 @@ export type SimEvent =
   | { type: 'merge'; from: string; to: string; x: number; y: number; bodies: [number, number]; body: number }
   | { type: 'victory'; cat: string | null };
 
-export const CANVAS_W = 1080;
+export const CANVAS_W = 1080; // default video size (portrait 9:16)
 export const CANVAS_H = 1920;
+export const CANVAS_SIZES: { label: string; width: number; height: number }[] = [
+  { label: 'Portrait 9:16 (1080×1920) — TikTok, Reels, Shorts', width: 1080, height: 1920 },
+  { label: 'Landscape 16:9 (1920×1080) — YouTube', width: 1920, height: 1080 },
+  { label: 'Square 1:1 (1080×1080)', width: 1080, height: 1080 },
+  { label: 'Portrait 4:5 (1080×1350) — Instagram feed', width: 1080, height: 1350 },
+  { label: 'Portrait 9:16 small (720×1280)', width: 720, height: 1280 }
+];
 
 export function pairKey(a: string, b: string): string { return a < b ? a + '|' + b : b + '|' + a; }

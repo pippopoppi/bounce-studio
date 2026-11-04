@@ -26,7 +26,7 @@ small { color: var(--muted); font-weight: 400; }
 
 .center { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .stage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 10px; background: #0a0d11; }
-.stage canvas { height: 100%; max-height: 100%; max-width: 100%; aspect-ratio: 9 / 16; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); background: #000; }
+.stage canvas { max-height: 100%; max-width: 100%; width: auto; height: auto; aspect-ratio: 9 / 16; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); background: #000; }
 .transport { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
 .transport .time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 120px; }
 .transport .counts { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }

@@ -12,6 +12,7 @@ const setPos = Body.setPosition as unknown as (b: Matter.Body, p: Vec, updateVel
 const setAng = Body.setAngle as unknown as (b: Matter.Body, a: number, updateVelocity?: boolean) => void;
 const rotateAbout = Body.rotate as unknown as (b: Matter.Body, r: number, p?: Vec, updateVelocity?: boolean) => void;
 
+// Centre of the default-sized canvas (tests use it); a world's own centre is `world.center`.
 export const CENTER: Vec = { x: CANVAS_W / 2, y: CANVAS_H / 2 };
 
 export interface Ball { id: number; cat: string; lives: number; body: Matter.Body; radius: number; spawnIndex: number }
@@ -52,8 +53,10 @@ export class PhysicsWorld {
   private ballId = 1;
   private mergeCount = 0;
 
+  readonly center: Vec;
   constructor(cfg: Config) {
     this.cfg = cfg;
+    this.center = { x: cfg.canvas.width / 2, y: cfg.canvas.height / 2 };
     this.rng = new Rng(cfg.seed);
     (Common as unknown as { _seed: number })._seed = cfg.seed;
     const p = cfg.physics;
@@ -120,7 +123,7 @@ export class PhysicsWorld {
 
   private segmentBody(sg: Seg, t: number, opts: WallOpts): Matter.Body {
     const len = Math.hypot(sg.p1.x - sg.p0.x, sg.p1.y - sg.p0.y);
-    const cx = CENTER.x + (sg.p0.x + sg.p1.x) / 2 + sg.n.x * (t / 2), cy = CENTER.y + (sg.p0.y + sg.p1.y) / 2 + sg.n.y * (t / 2);
+    const cx = this.center.x + (sg.p0.x + sg.p1.x) / 2 + sg.n.x * (t / 2), cy = this.center.y + (sg.p0.y + sg.p1.y) / 2 + sg.n.y * (t / 2);
     return Bodies.rectangle(cx, cy, len, t, { ...opts, angle: Math.atan2(sg.p1.y - sg.p0.y, sg.p1.x - sg.p0.x) });
   }
 
@@ -167,7 +170,7 @@ export class PhysicsWorld {
 
   private buildPipeParts(a: ArenaConfig, g: PipeGeometry, opts: WallOpts): Matter.Body[] {
     const t = a.wallThickness, th = Math.atan2(g.d.y, g.d.x);
-    const at = (v: number, u: number): Vec => ({ x: CENTER.x + g.d.x * v + g.u.x * u, y: CENTER.y + g.d.y * v + g.u.y * u });
+    const at = (v: number, u: number): Vec => ({ x: this.center.x + g.d.x * v + g.u.x * u, y: this.center.y + g.d.y * v + g.u.y * u });
     const parts: Matter.Body[] = [];
     for (const [vStart, side] of [[g.vLeft, -1], [g.vRight, 1]] as const) {
       const v0 = vStart - 1, len = g.vEnd + t - v0;
@@ -184,7 +187,7 @@ export class PhysicsWorld {
   private buildObstacles(list: Obstacle[]): void {
     for (const o of list) {
       const opts = { isStatic: true, restitution: o.restitution, friction: o.friction, frictionStatic: 0, label: 'obstacle', angle: o.angle * DEG };
-      const x = CENTER.x + o.x, y = CENTER.y + o.y;
+      const x = this.center.x + o.x, y = this.center.y + o.y;
       const body = o.kind === 'circle' ? Bodies.circle(x, y, Math.max(4, o.r), opts) : Bodies.rectangle(x, y, Math.max(4, o.w), Math.max(4, o.h), opts);
       this.obstacles.push({ cfg: o, body });
       Composite.add(this.engine.world, body);
@@ -193,7 +196,7 @@ export class PhysicsWorld {
   }
 
   private obstaclePose(o: Obstacle, t: number): { x: number; y: number; angle: number } {
-    let x = CENTER.x + o.x, y = CENTER.y + o.y;
+    let x = this.center.x + o.x, y = this.center.y + o.y;
     const m = o.motion, period = Math.max(0.05, m.period);
     if (m.type === 'linear') { const s = Math.sin((2 * Math.PI * t) / period); x += m.ax * s; y += m.ay * s; }
     else if (m.type === 'orbit') { const ph = (2 * Math.PI * t) / period + m.ay * DEG; x += m.ax * Math.cos(ph); y += m.ax * Math.sin(ph); }
@@ -229,11 +232,11 @@ export class PhysicsWorld {
 
   private overlaps(p: Vec, r: number): boolean {
     for (const b of this.balls.values()) {
-      const dx = b.body.position.x - CENTER.x - p.x, dy = b.body.position.y - CENTER.y - p.y;
+      const dx = b.body.position.x - this.center.x - p.x, dy = b.body.position.y - this.center.y - p.y;
       if (dx * dx + dy * dy < (r + b.radius + 6) ** 2) return true;
     }
     for (const o of this.obstacles) {
-      const dx = o.body.position.x - CENTER.x - p.x, dy = o.body.position.y - CENTER.y - p.y;
+      const dx = o.body.position.x - this.center.x - p.x, dy = o.body.position.y - this.center.y - p.y;
       const reach = o.cfg.kind === 'circle' ? o.cfg.r : Math.hypot(o.cfg.w, o.cfg.h) / 2;
       if (dx * dx + dy * dy < (r + reach + 6) ** 2) return true;
     }
@@ -262,7 +265,7 @@ export class PhysicsWorld {
 
   private addBall(cat: Category, index: number, p: Vec, vel: Vec): Ball {
     const r = Math.max(4, cat.radius);
-    const body = Bodies.circle(CENTER.x + p.x, CENTER.y + p.y, r, {
+    const body = Bodies.circle(this.center.x + p.x, this.center.y + p.y, r, {
       restitution: cat.restitution, friction: cat.friction, frictionStatic: 0,
       frictionAir: Math.max(0, cat.frictionAir + this.cfg.physics.airDamping), label: 'ball'
     });
@@ -339,7 +342,7 @@ export class PhysicsWorld {
     const a = this.cfg.arena;
     if (this.walls && a.rotationSpeed && !this.pipeGeo) { // the ring cannot turn while a pipe is attached
       const target = a.rotationSpeed * DEG * t;
-      rotateAbout(this.walls, target - this.wallAngle, CENTER, true);
+      rotateAbout(this.walls, target - this.wallAngle, this.center, true);
       this.wallAngle = target;
     }
     if (this.obstacles.length) this.placeObstacles(t);
@@ -388,12 +391,12 @@ export class PhysicsWorld {
     for (const [a, b, target] of merges) {
       // Two become one: the new character keeps the pair's momentum and appears where they met.
       const pa = a.body.position, pb = b.body.position, ma = a.body.mass, mb = b.body.mass;
-      const p = { x: (pa.x * ma + pb.x * mb) / (ma + mb) - CENTER.x, y: (pa.y * ma + pb.y * mb) / (ma + mb) - CENTER.y };
+      const p = { x: (pa.x * ma + pb.x * mb) / (ma + mb) - this.center.x, y: (pa.y * ma + pb.y * mb) / (ma + mb) - this.center.y };
       const v = { x: ((a.body.velocity.x * ma + b.body.velocity.x * mb) / (ma + mb)) * 60, y: ((a.body.velocity.y * ma + b.body.velocity.y * mb) / (ma + mb)) * 60 };
       const from = a.cat;
       this.remove(a.id); this.remove(b.id); dead.delete(a.id); dead.delete(b.id);
       const nb = this.addBall(target, this.mergeCount++, p, v);
-      events.push({ type: 'merge', from, to: target.id, x: p.x + CENTER.x, y: p.y + CENTER.y, bodies: [a.id, b.id], body: nb.id });
+      events.push({ type: 'merge', from, to: target.id, x: p.x + this.center.x, y: p.y + this.center.y, bodies: [a.id, b.id], body: nb.id });
     }
     for (const id of dead) {
       const b = this.balls.get(id); if (!b) continue;
@@ -422,9 +425,9 @@ export class PhysicsWorld {
     const a = this.cfg.arena;
     for (const b of Array.from(this.balls.values())) {
       const p = b.body.position;
-      const d = Math.hypot(p.x - CENTER.x, p.y - CENTER.y);
+      const d = Math.hypot(p.x - this.center.x, p.y - this.center.y);
       let out = a.type === 'circleGap' ? d > a.radius + b.radius * 1.5
-        : p.x < -300 || p.x > CANVAS_W + 300 || p.y < -300 || p.y > CANVAS_H + 300;
+        : p.x < -300 || p.x > this.cfg.canvas.width + 300 || p.y < -300 || p.y > this.cfg.canvas.height + 300;
       if (out && this.inPipe(p, b.radius)) out = false;
       if (out) { events.push({ type: 'escape', cat: b.cat, x: p.x, y: p.y, body: b.id }); this.remove(b.id); }
     }
@@ -432,7 +435,7 @@ export class PhysicsWorld {
 
   private inPipe(p: Vec, r: number): boolean {
     const g = this.pipeGeo; if (!g) return false;
-    const l = { x: p.x - CENTER.x, y: p.y - CENTER.y };
+    const l = { x: p.x - this.center.x, y: p.y - this.center.y };
     const v = dot(l, g.d), u = dot(l, g.u);
     return v > g.vMin - r && v < g.vEnd + r * 4 && Math.abs(u) < g.halfWidth + r;
   }
